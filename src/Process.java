@@ -1,20 +1,25 @@
 
-public class Process extends Thread{
+public class Process {
 
-	public static void main(String[] args)
+	static boolean hasToken = false;
+	static Token token = null;
+
+	private void createToken(Integer n) {
+		this.hasToken = true;
+		this.token = new Token(n);
+	}
+
+	public static void main(String[] args) throws InterruptedException
 	{
-		int childQuantity = Integer.parseInt(args[0]);
-		for(int i = 0; i < childQuantity; i++) {
-			Process child = new Process();
-			child.start();
+		String fileName = args[1];
+		int capacity = Integer.parseInt(args[2]);
+		int speed = Integer.parseInt(args[3]);
+		Thread.sleep(Integer.parseInt(args[4]));
+		if(args[5].equals("true") || args[5].equals("True")) {
+			// createToken(Integer.parseInt(args[0]));
+			hasToken = true;
+			token = new Token(Integer.parseInt(args[0]));
 		}
-		return;
+		
 	}
-
-	public void run()
-	{
-		System.out.println("Hola");
-		return;
-	}
-
 }
