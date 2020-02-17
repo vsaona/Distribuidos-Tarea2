@@ -11,7 +11,7 @@ public class Token {
 		queue = new LinkedList<>();
 	}
 
-	public void waitToken(Integer id)
+	public void request(Integer id)
 	{
 		this.queue.add(id);
 	}
