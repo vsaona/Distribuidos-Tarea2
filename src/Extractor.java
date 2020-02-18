@@ -9,9 +9,15 @@ public class Extractor extends UnicastRemoteObject implements Reader{
 	boolean hasToken;
 	Token token;
 
-	private void createToken(Integer n) {
+	private void createToken(Integer n) 
+	{
 		this.hasToken = true;
 		this.token = new Token(n);
+	}
+
+	Extractor() throws RemoteException
+	{
+		super();
 	}
 
 	Extractor(int n, String fileName, int capacity, int speed, boolean hasToken) throws RemoteException
