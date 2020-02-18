@@ -12,7 +12,7 @@ public class Process
 	public static Reader setupRemoteMethod(String bearer, int processes, String fileName, int capacity, int speed) throws RemoteException, MalformedURLException
 	{
 		if (bearer.equalsIgnoreCase("True")) {
-			Reader reader = new Extractor(processes, fileName, capacity, speed, true);
+			Reader reader = new Extractor(processes, fileName, capacity, speed);
 			LocateRegistry.createRegistry(rmiPort);
 			Naming.rebind(rmiReaderUrl, reader);
 			return reader;
@@ -29,12 +29,11 @@ public class Process
 			try {
 				reader = (Reader)Naming.lookup(rmiReaderUrl);  
 			} catch (NotBoundException e){ // En caso de que este proceso haya sido invocado antes que el `bearer`.
-				System.out.println(e);
+				e.printStackTrace(System.err);
 			}
 		}
 
 		return reader;
-
 	}
 
 	public static void main(String[] args) throws InterruptedException, RemoteException, MalformedURLException
@@ -50,6 +49,8 @@ public class Process
 		if (reader == null) {
 			reader = getRemoteReader();
 		}
+
+		Site site = reader.generateSite();
 
 		while(true) Thread.sleep(1000);
 	}
