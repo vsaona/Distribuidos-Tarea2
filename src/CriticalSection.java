@@ -20,6 +20,7 @@ class CriticalSection {
 
     public String executeCriticalSection() throws IOException, InterruptedException 
     {
+        Utils.debugMsg("Entre al metodo de la seccion critica.");
         BufferedReader reader = new BufferedReader(new InputStreamReader(new FileInputStream(fileName)));
         int c;
         int i = 0;
@@ -30,16 +31,18 @@ class CriticalSection {
                 this.fileHasEnded = true;
                 break;
             }
-            characters[i] = (char)c;
-            Thread.sleep(milisecondsPerChar);
+            Utils.debugMsg(i + "/" + capacity + ": " + (char)c);
+            characters[i++] = (char)c;
+            Utils.sleep(milisecondsPerChar);
         }
         reader.close();
+        Utils.debugMsg("Estoy saliendo del metodo de la seccion critica.\n");
         return new String(characters);
     }
 
     public void waitMeIAmTired() throws InterruptedException 
     {
-        Thread.sleep(capacity*1000/2);
+        Utils.sleep(capacity*1000/2);
     }
 
     public boolean hasFileEnded()

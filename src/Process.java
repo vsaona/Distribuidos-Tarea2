@@ -1,5 +1,6 @@
 import java.io.IOException;
 import java.net.MalformedURLException;
+import java.net.SocketException;
 import java.rmi.*;
 import java.rmi.registry.*;
 
@@ -24,7 +25,7 @@ public class Process
 	{
 		Reader reader = null;
 		while (reader == null) {
-			Thread.sleep(1000);
+			Utils.sleep(1000);
 
 			try {
 				reader = (Reader)Naming.lookup(rmiReaderUrl);  
@@ -32,7 +33,7 @@ public class Process
 				// e.printStackTrace(System.err);
 				System.out.println("El bearer todavia no configura el RMI...");
 			} catch (NotBoundException e){
-				System.out.println("El objeto todavia no ha sido metido en la weaita...");
+				System.out.println("El objeto todavia no ha sido registrado en el RMI...");
 			}
 		}
 		return reader;
@@ -40,48 +41,66 @@ public class Process
 
 	public static void main(String[] args) throws InterruptedException, RemoteException, NotBoundException, MalformedURLException, IOException
 	{
+		Utils.debugEnabled = true;
+
 		int processes = Integer.parseInt(args[0]);
 		String fileName = args[1];
 		int capacity = Integer.parseInt(args[2]);
 		int speed = Integer.parseInt(args[3]);
 		int delay = Integer.parseInt(args[4]);
-		Thread.sleep(delay);
+		Utils.sleep(delay);
 
 		Reader reader = setupRemoteMethod(args[5], processes, fileName, capacity, speed);
 		if (reader == null) {
 			reader = getRemoteReader();
 		}
 
-		SiteInterface site = reader.generateSite();
-		System.out.println(site.getId());
-		CriticalSection cs = new CriticalSection(fileName, capacity, speed);
+		try {
+			SiteInterface site = reader.generateSite();
+			System.out.println(site.getId());
+			CriticalSection cs = new CriticalSection(fileName, capacity, speed);
 
-		String charactersRead = "";
-		while(!cs.hasFileEnded()) {
-			if(site.shouldIKillMyself()) {
-				break;
-			}
-			site.requestCriticalSection();
-			System.out.println("esperando...");
-
-			if(site.canIExecuteTheCriticalSection()) {
-				System.out.println("Seccion critica");
-				site.startExecutingTheCriticalSection();
-				String asdf = cs.executeCriticalSection();
-				System.out.println(asdf);
-				charactersRead += asdf;
-				site.finishTheExecutionOfTheCriticalSection();
-
-				site.releaseCriticalSection();
-
-				if(cs.hasFileEnded()) {
-					reader.killEveryone();
+			String charactersRead = "";
+			while(!cs.hasFileEnded()) {
+				if(site.shouldIKillMyself()) {
+					Utils.debugMsg("Suicidaton!");
+					break;
 				}
-				cs.waitMeIAmTired();
+				if(!site.didIRequestTheCriticalSection()) {
+					Utils.debugMsg("Pidiendo seccion critica...");
+					site.requestCriticalSection();
+					Utils.debugMsg("Esperando...");
+				}
+
+				if(site.canIExecuteTheCriticalSection()) {
+					Utils.debugMsg("Voy a empezar la seccion critica");
+					site.startExecutingTheCriticalSection();
+					Utils.debugMsg("Empece la seccion critica");
+					String asdf = cs.executeCriticalSection();
+					Utils.debugMsg("Termine la seccion critica");
+					Utils.debugMsg("Lei: " + asdf);
+					charactersRead += asdf;
+					site.finishTheExecutionOfTheCriticalSection();
+
+					Utils.debugMsg("Gente, ya termine!");
+					site.releaseCriticalSection();
+
+					if(cs.hasFileEnded()) {
+						Utils.debugMsg("Suicidaton bailable!");
+						reader.killEveryone();
+					}
+
+					Utils.debugMsg("\nMe canse.");
+					cs.waitMeIAmTired();
+				}
+
 			}
 
+			System.out.println(charactersRead);
+		} catch(SocketException e) {
+			Utils.debugMsg("SocketException: RMI se cayo.");
+		} catch(ConnectException e) {
+			Utils.debugMsg("ConnectException: RMI se cayo.");
 		}
-
-		System.out.println(charactersRead);
 	}
 }

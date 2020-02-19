@@ -30,6 +30,16 @@ class Site extends UnicastRemoteObject implements SiteInterface
         }
     }
 
+    public int giveMeTheRNof(int id) throws RemoteException
+    {
+        return RN[id];
+    }
+
+    public boolean didIRequestTheCriticalSection() throws RemoteException
+    {
+        return isRequesting;
+    }
+
     public void requestCriticalSection() throws RemoteException
     {
         if(!hasToken && !isRequesting) {

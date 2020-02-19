@@ -8,6 +8,9 @@ public class Token {
 	public Token(Integer n) 
 	{
 		executed = new Integer[n];
+		for(int i = 0; i < n; ++i){
+			executed[i] = 0;
+		}
 		queue = new LinkedList<>();
 	}
 

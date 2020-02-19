@@ -30,9 +30,9 @@ public class Extractor extends UnicastRemoteObject implements Reader
 
 	public void request(Integer id, Integer seq) throws RemoteException
 	{
-		for(int i = 0; i < nextId; ++i){
-			if(i != id){
-				sitesArr[i].receiveExternalRequest(i, seq);
+		for(int j = 0; j < nextId; ++j){
+			if(j != id){
+				sitesArr[j].receiveExternalRequest(id, seq);
 			}
 		}
 	}
@@ -40,7 +40,7 @@ public class Extractor extends UnicastRemoteObject implements Reader
 	public void waitToken() throws Exception
 	{
 		// TODO
-		Thread.sleep(1000);
+		Utils.sleep(1000);
 	}
 
 	public void kill() throws RemoteException
@@ -79,7 +79,12 @@ public class Extractor extends UnicastRemoteObject implements Reader
 		token.executed[id] = RN[id];
 
 		for(int j = 0; j < nextId; ++j) {
-			if(RN[j] == token.executed[j] + 1) {
+			Utils.debugMsg(""+j + " ~ " + nextId);
+			//Utils.debugMsg("length: " + RN.length);
+			int left = sitesArr[id].giveMeTheRNof(j);
+			int right = token.executed[j] + 1;
+			if(left == right) {
+				Utils.debugMsg("Agreando a " + j + " a la cola!");
 				if(!token.queue.contains(j)) {
 					token.queue.add(j);
 				}

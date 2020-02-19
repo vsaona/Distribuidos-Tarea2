@@ -2,6 +2,7 @@ import java.rmi.*;
 
 public interface SiteInterface extends Remote
 {
+    public boolean didIRequestTheCriticalSection() throws RemoteException;
     public void requestCriticalSection() throws RemoteException;
     public void receiveExternalRequest(int i, int sn) throws RemoteException;
 
