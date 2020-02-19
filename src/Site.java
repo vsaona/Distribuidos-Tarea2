@@ -30,40 +30,88 @@ class Site extends UnicastRemoteObject implements SiteInterface
         }
     }
 
+    boolean _isInValidState()
+    {
+        if(hasToken) {
+            if(isExcuting) {
+                if(isRequesting) {
+                    return false;
+                } else {
+                    return true;
+                }
+            } else {
+                if(isRequesting) {
+                    return false;
+                } else {
+                    return true;
+                }
+            }
+        } else {
+            if(isExcuting) {
+                return false;
+            } else {
+                return true;
+            }
+        }
+    }
+
+    boolean isInValidState()
+    {
+        if(!_isInValidState()) {
+            Utils.debugErr("\n(" + myId+ ")Site invalid state:");
+            Utils.debugErr("\t(" + myId+ ")hasToken: " + hasToken);
+            Utils.debugErr("\t(" + myId+ ")isExcuting: " + isExcuting);
+            Utils.debugErr("\t(" + myId+ ")isRequesting: " + isRequesting);
+            return false;
+        }
+        return true;
+    }
+
     public int giveMeTheRNof(int id) throws RemoteException
     {
+        assert(isInValidState());
         return RN[id];
     }
 
     public boolean didIRequestTheCriticalSection() throws RemoteException
     {
+        assert(isInValidState());
         return isRequesting;
     }
 
     public void requestCriticalSection() throws RemoteException
     {
+        assert(isInValidState());
         if(!hasToken && !isRequesting) {
             try {
-                int sn = RN[myId] + 1;
-                reader.request(myId, sn);
-                RN[myId] = sn;
+                Utils.debugMsg("(" + myId+ ")Gente! Quiero el token!");
+                RN[myId] = RN[myId] + 1;
                 isRequesting = true;
+                reader.request(myId, RN[myId]);
             } catch (RemoteException e) {
                 e.printStackTrace(System.err);
+                reader.killEveryone();
             }
         }
     }
 
     public void receiveExternalRequest(int i, int sn) throws RemoteException
     {
+        assert(isInValidState());
         assert(i < RN.length);
         assert(i != myId);
+        Utils.debugMsg("(" + myId+ ") Recibi un request de " + i + " con un sn de " + sn);
         RN[i] = Math.max(RN[i], sn);
 
         if(!isExcuting && hasToken) {
             try {
-                reader.sendTokenTo(i, RN[i]);
-                hasToken = false;
+                Utils.debugMsg("(" + myId+ ") Tengo el token y no lo estoy usando, se lo mandare a " + i);
+                if(reader.sendTokenTo(i, RN[i])) {
+                    Utils.debugMsg("(" + myId + ") " + i + " acepto el token.");
+                    hasToken = false;
+                } else {
+                    Utils.debugMsg("(" + myId + ") " + i + " no acepto el token, por lo que me lo quedo yo.");
+                }
             } catch (RemoteException e) {
                 e.printStackTrace(System.err);
             }
@@ -72,12 +120,15 @@ class Site extends UnicastRemoteObject implements SiteInterface
 
     public void takeToken() throws RemoteException
     {
+        assert(isInValidState());
+        Utils.debugMsg("(" + myId + ") Me acaba de llegar el token y lo acepte");
         hasToken = true;
         isRequesting = false;
     }
 
     public void releaseCriticalSection() throws RemoteException
     {
+        assert(isInValidState());
         try {
             if(hasToken && !isExcuting && reader.releaseCriticalSection(myId, RN)) {
                 hasToken = false;
@@ -89,23 +140,34 @@ class Site extends UnicastRemoteObject implements SiteInterface
 
     public boolean canIExecuteTheCriticalSection() throws RemoteException
     {
+        assert(isInValidState());
         return hasToken;
     }
 
     public void startExecutingTheCriticalSection() throws RemoteException
     {
+        assert(isInValidState());
         assert(hasToken && !isExcuting);
         isExcuting = true;
     }
 
     public void finishTheExecutionOfTheCriticalSection() throws RemoteException
     {
+        assert(isInValidState());
         assert(hasToken && isExcuting);
         isExcuting = false;
     }
 
+    public boolean amIExecutingTheCriticalSection() throws RemoteException
+    {
+        assert(isInValidState());
+        assert(isExcuting && hasToken || !isExcuting);
+        return isExcuting;
+    }
+
     public boolean shouldIKillMyself() throws RemoteException
     {
+        assert(isInValidState());
         if(!everythingIsFine){
             return true;
         }
@@ -114,6 +176,7 @@ class Site extends UnicastRemoteObject implements SiteInterface
 
     public int getId() throws RemoteException
     {
+        assert(isInValidState());
         return myId;
     }
 }

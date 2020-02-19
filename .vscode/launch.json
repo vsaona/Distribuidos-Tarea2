@@ -1,0 +1,23 @@
+{
+    // Use IntelliSense to learn about possible attributes.
+    // Hover to view descriptions of existing attributes.
+    // For more information, visit: https://go.microsoft.com/fwlink/?linkid=830387
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "type": "java",
+            "name": "Debug (Launch) - Current File",
+            "request": "launch",
+            "mainClass": "${file}",
+            "args": ["3", "src/Makefile", "80", "1", "1500", "True"]
+        },
+        {
+            "type": "java",
+            "name": "Debug (Launch)-Process<Distribuidos-Tarea2_5e482733>",
+            "request": "launch",
+            "mainClass": "Process",
+            "projectName": "Distribuidos-Tarea2_5e482733",
+            "args": ["3", "src/Makefile", "80", "1", "1500", "True"]
+        }
+    ]
+}

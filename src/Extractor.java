@@ -65,12 +65,14 @@ public class Extractor extends UnicastRemoteObject implements Reader
 		return sitesArr[nextId++];
 	}
 
-	public void sendTokenTo(int id, int sn) throws RemoteException
+	public boolean sendTokenTo(int id, int sn) throws RemoteException
 	{
 		assert(id < sitesArr.length);
 		if(sn == token.executed[id] + 1) {
 			sitesArr[id].takeToken();
+			return true;
 		}
+		return false;
 	}
 
 	public boolean releaseCriticalSection(int id, Integer[] RN) throws RemoteException

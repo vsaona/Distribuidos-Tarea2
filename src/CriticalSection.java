@@ -3,10 +3,12 @@ import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStreamReader;
 
-class CriticalSection {
+class CriticalSection
+{
     private String fileName;
     private int capacity;
     private long milisecondsPerChar;
+    private SiteInterface site = null;
 
     private boolean fileHasEnded;
 
@@ -18,8 +20,17 @@ class CriticalSection {
         this.fileHasEnded = false;
     }
 
+    public void setSite(SiteInterface site)
+    {
+        assert(site != null);
+        this.site = site;
+    }
+
     public String executeCriticalSection() throws IOException, InterruptedException 
     {
+        assert(site != null);
+        assert(site.amIExecutingTheCriticalSection());
+
         Utils.debugMsg("Entre al metodo de la seccion critica.");
         BufferedReader reader = new BufferedReader(new InputStreamReader(new FileInputStream(fileName)));
         int c;

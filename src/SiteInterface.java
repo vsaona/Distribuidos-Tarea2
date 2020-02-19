@@ -12,6 +12,7 @@ public interface SiteInterface extends Remote
     public boolean canIExecuteTheCriticalSection() throws RemoteException;
     public void startExecutingTheCriticalSection() throws RemoteException;
     public void finishTheExecutionOfTheCriticalSection() throws RemoteException;
+    public boolean amIExecutingTheCriticalSection() throws RemoteException;
 
     public boolean shouldIKillMyself() throws RemoteException;
 

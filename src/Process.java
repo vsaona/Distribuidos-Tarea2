@@ -24,8 +24,7 @@ public class Process
 	public static Reader getRemoteReader() throws InterruptedException, NotBoundException, MalformedURLException
 	{
 		Reader reader = null;
-		while (reader == null) {
-			Utils.sleep(1000);
+		while(reader == null) {
 
 			try {
 				reader = (Reader)Naming.lookup(rmiReaderUrl);  
@@ -35,6 +34,8 @@ public class Process
 			} catch (NotBoundException e){
 				System.out.println("El objeto todavia no ha sido registrado en el RMI...");
 			}
+			
+			Utils.sleep(1000);
 		}
 		return reader;
 	}
@@ -59,6 +60,7 @@ public class Process
 			SiteInterface site = reader.generateSite();
 			System.out.println(site.getId());
 			CriticalSection cs = new CriticalSection(fileName, capacity, speed);
+			cs.setSite(site);
 
 			String charactersRead = "";
 			while(!cs.hasFileEnded()) {
@@ -102,5 +104,6 @@ public class Process
 		} catch(ConnectException e) {
 			Utils.debugMsg("ConnectException: RMI se cayo.");
 		}
+		Utils.debugMsg("Terminando el programa.");
 	}
 }

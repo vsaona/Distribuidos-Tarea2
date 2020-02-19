@@ -1,6 +1,13 @@
 # Distribuidos-Tarea2
 Tarea sobre algoritmo de Suzuki-Kasami
 
+
+Ejemplos de ejecución:
+- `java -ea Process 3 Makefile 10 1 1500 True`
+  - `-ea` activa los `assert`. Usalo mientras desarrollas.
+- `java -ea Process 3 Makefile 4 1 11 false`
+
+
 Referencias:
 - RMI:
   - https://www.geeksForGeeks.org/remote-method-invocation-in-java/
