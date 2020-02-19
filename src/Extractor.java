@@ -45,8 +45,13 @@ public class Extractor extends UnicastRemoteObject implements Reader
 
 	public void kill() throws RemoteException
 	{
-		// TODO
-		System.exit(0);
+		for(int i = 0; i < nextId; ++i) {
+			sitesArr[i].everythingIsFine = false;
+		}
+	}
+	public void killEveryone() throws RemoteException
+	{
+		kill();
 	}
 
 
@@ -54,6 +59,9 @@ public class Extractor extends UnicastRemoteObject implements Reader
 	{
 		assert(nextId < processes);
 		sitesArr[nextId] = new Site(this, processes, nextId);
+		if(nextId == 0) {
+			sitesArr[nextId].takeToken();
+		}
 		return sitesArr[nextId++];
 	}
 

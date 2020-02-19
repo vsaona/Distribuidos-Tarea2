@@ -1,10 +1,10 @@
+import java.io.IOException;
 import java.net.MalformedURLException;
 import java.rmi.*;
 import java.rmi.registry.*;
 
 public class Process
 {
-
 	public static final int rmiPort = 0xA1F;
 	public static final String rmiUrl = "rmi://localhost:" + rmiPort + "/";
 	public static final String rmiReaderUrl = rmiUrl + "tareaDeDistribuidos.exe";
@@ -30,13 +30,15 @@ public class Process
 				reader = (Reader)Naming.lookup(rmiReaderUrl);  
 			} catch (RemoteException e){ // En caso de que este proceso haya sido invocado antes que el `bearer`.
 				// e.printStackTrace(System.err);
+				System.out.println("El bearer todavia no configura el RMI...");
+			} catch (NotBoundException e){
 				System.out.println("El objeto todavia no ha sido metido en la weaita...");
 			}
 		}
 		return reader;
 	}
 
-	public static void main(String[] args) throws InterruptedException, RemoteException, NotBoundException, MalformedURLException
+	public static void main(String[] args) throws InterruptedException, RemoteException, NotBoundException, MalformedURLException, IOException
 	{
 		int processes = Integer.parseInt(args[0]);
 		String fileName = args[1];
@@ -52,7 +54,34 @@ public class Process
 
 		SiteInterface site = reader.generateSite();
 		System.out.println(site.getId());
+		CriticalSection cs = new CriticalSection(fileName, capacity, speed);
 
-		while(true) Thread.sleep(1000);
+		String charactersRead = "";
+		while(!cs.hasFileEnded()) {
+			if(site.shouldIKillMyself()) {
+				break;
+			}
+			site.requestCriticalSection();
+			System.out.println("esperando...");
+
+			if(site.canIExecuteTheCriticalSection()) {
+				System.out.println("Seccion critica");
+				site.startExecutingTheCriticalSection();
+				String asdf = cs.executeCriticalSection();
+				System.out.println(asdf);
+				charactersRead += asdf;
+				site.finishTheExecutionOfTheCriticalSection();
+
+				site.releaseCriticalSection();
+
+				if(cs.hasFileEnded()) {
+					reader.killEveryone();
+				}
+				cs.waitMeIAmTired();
+			}
+
+		}
+
+		System.out.println(charactersRead);
 	}
 }

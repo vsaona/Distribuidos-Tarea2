@@ -11,6 +11,8 @@ class Site extends UnicastRemoteObject implements SiteInterface
     private boolean isExcuting = false;
     private boolean isRequesting = false;
 
+    boolean everythingIsFine = true;
+
     public Site() throws RemoteException
 	{
 		super();
@@ -82,14 +84,22 @@ class Site extends UnicastRemoteObject implements SiteInterface
 
     public void startExecutingTheCriticalSection() throws RemoteException
     {
-        assert(hasToken);
+        assert(hasToken && !isExcuting);
         isExcuting = true;
     }
 
     public void finishTheExecutionOfTheCriticalSection() throws RemoteException
     {
-        assert(hasToken);
+        assert(hasToken && isExcuting);
         isExcuting = false;
+    }
+
+    public boolean shouldIKillMyself() throws RemoteException
+    {
+        if(!everythingIsFine){
+            return true;
+        }
+        return false;
     }
 
     public int getId() throws RemoteException

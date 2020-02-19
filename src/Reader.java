@@ -5,6 +5,7 @@ public interface Reader extends Remote
 	public void request(Integer id, Integer seq) throws RemoteException;
 	public void waitToken() throws Exception;
 	public void kill() throws RemoteException;
+	public void killEveryone() throws RemoteException;
 
 	public SiteInterface generateSite() throws RemoteException;
 	public void sendTokenTo(int id, int sn) throws RemoteException;
