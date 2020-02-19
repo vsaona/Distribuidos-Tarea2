@@ -1,18 +1,24 @@
-import java.rmi.RemoteException;
+import java.rmi.*;
+import java.rmi.server.UnicastRemoteObject;
 import java.lang.Math;
 
-class Site
+class Site extends UnicastRemoteObject implements SiteInterface
 {
-
-    private Reader reader;
+    private Extractor reader;
     private int myId;
     private Integer[] RN;
     private boolean hasToken = false;
     private boolean isExcuting = false;
     private boolean isRequesting = false;
 
-    public Site(Reader reader, int procesess, int myId)
+    public Site() throws RemoteException
+	{
+		super();
+    }
+
+    public Site(Extractor reader, int procesess, int myId) throws RemoteException
     {
+		super();
         this.reader = reader;
         this.myId = myId;
         assert(myId < procesess);
@@ -22,7 +28,7 @@ class Site
         }
     }
 
-    public void requestCriticalSection()
+    public void requestCriticalSection() throws RemoteException
     {
         if(!hasToken && !isRequesting) {
             try {
@@ -34,10 +40,9 @@ class Site
                 e.printStackTrace(System.err);
             }
         }
-        
     }
 
-    public void receiveExternalRequest(int i, int sn)
+    public void receiveExternalRequest(int i, int sn) throws RemoteException
     {
         assert(i < RN.length);
         assert(i != myId);
@@ -53,17 +58,42 @@ class Site
         }
     }
 
-	public void takeToken(){
+    public void takeToken() throws RemoteException
+    {
         hasToken = true;
+        isRequesting = false;
     }
 
-    public void releaseCriticalSection(){
+    public void releaseCriticalSection() throws RemoteException
+    {
         try {
-            if(hasToken && reader.releaseCriticalSection(myId, RN)) {
+            if(hasToken && !isExcuting && reader.releaseCriticalSection(myId, RN)) {
                 hasToken = false;
             }
         } catch(RemoteException e) {
             e.printStackTrace(System.err);
         }
+    }
+
+    public boolean canIExecuteTheCriticalSection() throws RemoteException
+    {
+        return hasToken;
+    }
+
+    public void startExecutingTheCriticalSection() throws RemoteException
+    {
+        assert(hasToken);
+        isExcuting = true;
+    }
+
+    public void finishTheExecutionOfTheCriticalSection() throws RemoteException
+    {
+        assert(hasToken);
+        isExcuting = false;
+    }
+
+    public int getId() throws RemoteException
+    {
+        return myId;
     }
 }

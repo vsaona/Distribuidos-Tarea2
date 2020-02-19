@@ -6,7 +6,7 @@ public interface Reader extends Remote
 	public void waitToken() throws Exception;
 	public void kill() throws RemoteException;
 
-	public Site generateSite() throws RemoteException;
+	public SiteInterface generateSite() throws RemoteException;
 	public void sendTokenTo(int id, int sn) throws RemoteException;
 	/// Returns true if token has been sended to other process.
 	public boolean releaseCriticalSection(int id, Integer[] RN) throws RemoteException;

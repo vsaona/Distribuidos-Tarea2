@@ -1,8 +1,8 @@
 import java.rmi.*;
 import java.rmi.server.*;
 
-public class Extractor extends UnicastRemoteObject implements Reader{
-
+public class Extractor extends UnicastRemoteObject implements Reader
+{
 	int processes;
 	String fileName;
 	int capacity;
@@ -30,24 +30,30 @@ public class Extractor extends UnicastRemoteObject implements Reader{
 
 	public void request(Integer id, Integer seq) throws RemoteException
 	{
-		token.request(id);
+		for(int i = 0; i < nextId; ++i){
+			if(i != id){
+				sitesArr[i].receiveExternalRequest(i, seq);
+			}
+		}
 	}
 
 	public void waitToken() throws Exception
 	{
+		// TODO
 		Thread.sleep(1000);
 	}
 
 	public void kill() throws RemoteException
 	{
+		// TODO
 		System.exit(0);
 	}
 
 
-	public Site generateSite() throws RemoteException
+	public SiteInterface generateSite() throws RemoteException
 	{
 		assert(nextId < processes);
-		sitesArr[nextId] = new Site((Reader)this, processes, nextId);
+		sitesArr[nextId] = new Site(this, processes, nextId);
 		return sitesArr[nextId++];
 	}
 

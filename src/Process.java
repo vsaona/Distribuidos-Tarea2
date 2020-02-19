@@ -6,8 +6,8 @@ public class Process
 {
 
 	public static final int rmiPort = 0xA1F;
-	public static final String rmiUrl = "rmi://localhost:" + rmiPort;
-	public static final String rmiReaderUrl = rmiUrl + java.lang.management.ManagementFactory.getRuntimeMXBean().getName();
+	public static final String rmiUrl = "rmi://localhost:" + rmiPort + "/";
+	public static final String rmiReaderUrl = rmiUrl + "tareaDeDistribuidos.exe";
 
 	public static Reader setupRemoteMethod(String bearer, int processes, String fileName, int capacity, int speed) throws RemoteException, MalformedURLException
 	{
@@ -20,23 +20,23 @@ public class Process
 		return null;
 	}
 
-	public static Reader getRemoteReader() throws InterruptedException, RemoteException, MalformedURLException
+	public static Reader getRemoteReader() throws InterruptedException, NotBoundException, MalformedURLException
 	{
 		Reader reader = null;
 		while (reader == null) {
-			Thread.sleep(1000); // Podría ser `delay`?
+			Thread.sleep(1000);
 
 			try {
 				reader = (Reader)Naming.lookup(rmiReaderUrl);  
-			} catch (NotBoundException e){ // En caso de que este proceso haya sido invocado antes que el `bearer`.
-				e.printStackTrace(System.err);
+			} catch (RemoteException e){ // En caso de que este proceso haya sido invocado antes que el `bearer`.
+				// e.printStackTrace(System.err);
+				System.out.println("El objeto todavia no ha sido metido en la weaita...");
 			}
 		}
-
 		return reader;
 	}
 
-	public static void main(String[] args) throws InterruptedException, RemoteException, MalformedURLException
+	public static void main(String[] args) throws InterruptedException, RemoteException, NotBoundException, MalformedURLException
 	{
 		int processes = Integer.parseInt(args[0]);
 		String fileName = args[1];
@@ -50,7 +50,8 @@ public class Process
 			reader = getRemoteReader();
 		}
 
-		Site site = reader.generateSite();
+		SiteInterface site = reader.generateSite();
+		System.out.println(site.getId());
 
 		while(true) Thread.sleep(1000);
 	}
