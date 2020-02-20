@@ -1,8 +1,11 @@
 import java.io.BufferedReader;
+import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileInputStream;
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.io.OutputStreamWriter;
 import java.rmi.RemoteException;
 
 class CriticalSection
@@ -59,8 +62,31 @@ class CriticalSection
                 Utils.sleep(-1, milisecondsPerChar);
             }
             reader.close();
+            updateFile();
             Utils.debugMsg(-1, "Estoy saliendo del metodo de la seccion critica.\n");
             return new String(characters);
+        } catch(IOException e) {
+            throw new IOException(e.getMessage());
+        }
+    }
+
+    private void updateFile() throws IOException
+    {
+        try {
+            int filesize = (int)getFileSize();
+            if(filesize == 0) {
+                return;
+            }
+            char characters[] = new char[filesize];
+            Utils.debugMsg(-1, "Borrando " + capacity + " caracteres del archivo (" + filesize + ").");
+
+            BufferedReader reader = new BufferedReader(new InputStreamReader(new FileInputStream(fileName)));
+            reader.read(characters);
+            reader.close();
+
+            BufferedWriter writer = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(fileName)));
+            writer.write(characters, capacity, Math.max(filesize - capacity, 0));
+            writer.close();
         } catch(IOException e) {
             throw new IOException(e.getMessage());
         }

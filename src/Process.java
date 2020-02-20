@@ -3,12 +3,13 @@ import java.net.MalformedURLException;
 import java.net.SocketException;
 import java.rmi.ConnectException;
 import java.rmi.RemoteException;
+import java.rmi.UnmarshalException;
 
 public class Process
 {
 	public static void main(String[] args) throws InterruptedException, RemoteException, MalformedURLException, IOException
 	{
-		Utils.debugEnabled = true;
+		Utils.enableDebug = true;
 
 		int processes = Integer.parseInt(args[0]);
 		String fileName = args[1];
@@ -69,7 +70,10 @@ public class Process
 			Utils.debugErr(-1, "SocketException: RMI se cayo.");
 		} catch(ConnectException e) {
 			Utils.debugErr(-1, "ConnectException: RMI se cayo.");
+		} catch(UnmarshalException e) {
+			Utils.debugErr(-1, "ConnectException: RMI se cayo.");
 		}
+
 		Utils.debugMsg(-1, "Terminando el programa.");
 	}
 }
