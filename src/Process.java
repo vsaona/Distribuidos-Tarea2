@@ -9,23 +9,6 @@ import javax.naming.SizeLimitExceededException;
 
 public class Process
 {
-	public static void colorPrintln(long remainingSize, long originalSize, String msg)
-	{
-		long percentage = 0;
-		if(originalSize != 0) {
-			percentage = 100*remainingSize/originalSize;
-		}
-		if(percentage < 25) {
-			Utils.redPrintln(msg);
-		} else if(percentage < 50) {
-			Utils.yellowPrintln(msg);
-		} else if(percentage < 75) {
-			Utils.greenPrintln(msg);
-		} else {
-			Utils.bluePrintln(msg);
-		}
-	}
-
 	public static void main(String[] args) throws InterruptedException, RemoteException, MalformedURLException, IOException, SizeLimitExceededException
 	{
 		Utils.enableDebug = true;
@@ -73,10 +56,7 @@ public class Process
 				}
 
 				if(site.canIExecuteTheCriticalSection()) {
-					String charactersRead = cs.executeCriticalSection();
-
-					colorPrintln(cs.getFileSize(), reader.originalSize(), Utils.ANSI_WHITE +  "Extracted: " + Utils.ANSI_BLACK + charactersRead);
-					totalcharactersRead += charactersRead;
+					totalcharactersRead += cs.executeCriticalSection();
 
 					if(cs.hasFileEnded()) {
 						Utils.debugMsg(site.getId(), "Suicidaton bailable!");
@@ -99,7 +79,7 @@ public class Process
 			Utils.debugErr(myId, "UnmarshalException: RMI se cayo.");
 		}
 
-		colorPrintln(cs.getFileSize(), reader.originalSize(), Utils.ANSI_WHITE +  "Total extracted: " + Utils.ANSI_BLACK + totalcharactersRead);
+		Utils.cyanPrintln(Utils.ANSI_WHITE +  "Total de caracteres extraidos: " + Utils.ANSI_BLACK + totalcharactersRead);
 
 		System.out.println("Terminando el proceso.");
 		System.exit(0);

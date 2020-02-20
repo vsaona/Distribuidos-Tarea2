@@ -51,8 +51,9 @@ class CriticalSection
         site.showState();
         try {
             charactersRead = criticalSection();
-
+            Utils.colorPrintln(getFileSize(), site.getOriginalSize(), Utils.ANSI_WHITE +  "Extraje: " + Utils.ANSI_BLACK + charactersRead);
         } catch(IOException e) {
+            // site.killEveryone();
             throw new IOException(e.getMessage());
         }
         site.finishTheExecutionOfTheCriticalSection();
@@ -98,7 +99,7 @@ class CriticalSection
 
     public void waitMeIAmTired() throws InterruptedException 
     {
-        Utils.debugMsg(site.getId(), "\nMe canse.");
+        Utils.debugMsg(site.getId(), "Me canse.");
         Utils.sleep(site.getId(), capacity*1000/2);
     }
 

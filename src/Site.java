@@ -18,6 +18,8 @@ class Site extends UnicastRemoteObject implements SiteInterface
     private boolean isRequesting = false;
     private boolean isWaiting = false;
 
+    long originalSize;
+
     boolean everythingIsFine = true;
 
     public Site() throws RemoteException
@@ -35,6 +37,7 @@ class Site extends UnicastRemoteObject implements SiteInterface
         for(int i = 0; i < procesess; ++i){
             this.RN[i] = 0;
         }
+        this.originalSize = reader.originalSize();
     }
 
     public void setId(int id, int bearerProcesess) throws RemoteException, RuntimeException, SizeLimitExceededException
@@ -59,25 +62,23 @@ class Site extends UnicastRemoteObject implements SiteInterface
 
     public void showState()
     {
-        // TODO: mostrar RN
-        if(!isExcuting && !isRequesting) {
-            Utils.cyanPrintln(Utils.ANSI_WHITE + "Ocioso.");
-        } else if(isRequesting) {
-            Utils.purplePrintln(Utils.ANSI_WHITE + "Esperando token.");
-        } else {
-            Utils.whitePrintln(Utils.ANSI_BLACK + "Seccion critica.");
-            /*
-            long percentage = 100*remainingSize/reader.originalSize();
-            if(percentage < 25) {
-                Utils.redPrintln(msg);
-            } else if(percentage < 50) {
-                Utils.yellowPrintln(msg);
-            } else if(percentage < 75) {
-                Utils.greenPrintln(msg);
-            } else {
-                Utils.bluePrintln(msg);
-            }*/
+        String RNstr = "[(0, " + RN[0] + ")";
+        for(int i = 1; i < RN.length; ++i) {
+            RNstr += ", (" + i + ", " + RN[i] + ")";
         }
+        RNstr += "]";
+        if(!isExcuting && !isRequesting) {
+            Utils.cyanPrintln(Utils.ANSI_WHITE + "Ocioso. " + RNstr);
+        } else if(isRequesting) {
+            Utils.purplePrintln(Utils.ANSI_WHITE + "Esperando token. " + RNstr);
+        } else {
+            Utils.whitePrintln(Utils.ANSI_BLACK + "Seccion critica. " + RNstr);
+        }
+    }
+
+    public long getOriginalSize()
+    {
+        return originalSize;
     }
 
     boolean _isInValidState()
