@@ -1,20 +1,15 @@
 import java.rmi.*;
 
+import javax.naming.SizeLimitExceededException;
+
 public interface SiteInterface extends Remote
 {
-    public boolean didIRequestTheCriticalSection() throws RemoteException;
-    public void requestCriticalSection() throws RemoteException;
-    public void receiveExternalRequest(int i, int sn) throws RemoteException;
+    public void setId(int id, int bearerProcesess) throws RemoteException, RuntimeException, SizeLimitExceededException;
+    public int giveMeTheRNof(int id) throws RemoteException;
 
+    // Returns true if this site had the token and gave it to i.
+    public boolean receiveExternalRequest(int i, int sn) throws RemoteException;
     public void takeToken() throws RemoteException;
-    public void releaseCriticalSection() throws RemoteException;
-
-    public boolean canIExecuteTheCriticalSection() throws RemoteException;
-    public void startExecutingTheCriticalSection() throws RemoteException;
-    public void finishTheExecutionOfTheCriticalSection() throws RemoteException;
-    public boolean amIExecutingTheCriticalSection() throws RemoteException;
-
-    public boolean shouldIKillMyself() throws RemoteException;
-
-    public int getId() throws RemoteException;
+	public void waitToken() throws RemoteException;
+	public void kill() throws RemoteException;
 }

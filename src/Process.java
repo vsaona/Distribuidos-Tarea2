@@ -5,11 +5,16 @@ import java.rmi.ConnectException;
 import java.rmi.RemoteException;
 import java.rmi.UnmarshalException;
 
+import javax.naming.SizeLimitExceededException;
+
 public class Process
 {
 	public static void colorPrintln(long remainingSize, long originalSize, String msg)
 	{
-		long percentage = 100*remainingSize/originalSize;
+		long percentage = 0;
+		if(originalSize != 0) {
+			percentage = 100*remainingSize/originalSize;
+		}
 		if(percentage < 25) {
 			Utils.redPrintln(msg);
 		} else if(percentage < 50) {
@@ -21,7 +26,7 @@ public class Process
 		}
 	}
 
-	public static void main(String[] args) throws InterruptedException, RemoteException, MalformedURLException, IOException
+	public static void main(String[] args) throws InterruptedException, RemoteException, MalformedURLException, IOException, SizeLimitExceededException
 	{
 		Utils.enableDebug = true;
 
@@ -30,7 +35,10 @@ public class Process
 		int capacity = Integer.parseInt(args[2]);
 		int speed = Integer.parseInt(args[3]);
 		int delay = Integer.parseInt(args[4]);
-		Utils.sleep(-1, delay);
+		if(delay > 0) {
+			System.out.println("Delay: " + delay + "[ms]");
+			Utils.sleep(-1, delay);
+		}
 
 		CriticalSection cs = new CriticalSection(fileName, capacity, speed);
 		Reader reader = RMIStuff.setupRemoteMethod(args[5], processes, cs.getFileSize());
@@ -38,60 +46,62 @@ public class Process
 			reader = RMIStuff.getRemoteReader();
 		}
 
+		int myId = -1;
+		String totalcharactersRead = "";
 		try {
-			SiteInterface site = reader.generateSite();
+			Site site = new Site(reader, processes);
+			reader.registerSite(site);
 			cs.setSite(site);
-			System.out.println("Mi id es: " + site.getId());
+			myId = site.getId();
+			System.out.println("Mi id es: " + myId);
+			site.showState();
 
-			String charactersRead = "";
 			while(!cs.hasFileEnded()) {
 				if(site.shouldIKillMyself()) {
 					Utils.debugMsg(-1, "Suicidaton!");
+					System.out.println("No quedan caracteres en el archivo.");
 					break;
 				}
+
+				if(site.amIWaiting()) {
+					Thread.sleep(50);
+				}
+
 				if(!site.didIRequestTheCriticalSection()) {
-					Utils.debugMsg(-1, "Pidiendo seccion critica...");
 					site.requestCriticalSection();
-					Utils.debugMsg(-1, "Esperando...");
+					site.showState();
 				}
 
 				if(site.canIExecuteTheCriticalSection()) {
-					Utils.debugMsg(-1, "Voy a empezar la seccion critica");
-					site.startExecutingTheCriticalSection();
+					String charactersRead = cs.executeCriticalSection();
 
-					Utils.debugMsg(-1, "Empece la seccion critica");
-					String asdf = cs.executeCriticalSection();
-
-					Utils.debugMsg(-1, "Lei: " + asdf);
-					colorPrintln(cs.getFileSize(), reader.originalSize(), Utils.ANSI_WHITE +  "Extracted: " + Utils.ANSI_BLACK + asdf);
-					charactersRead += asdf;
-
-					Utils.debugMsg(-1, "Termine la seccion critica");
-					site.finishTheExecutionOfTheCriticalSection();
-
-					Utils.debugMsg(-1, "Gente, ya termine!");
-					site.releaseCriticalSection();
+					colorPrintln(cs.getFileSize(), reader.originalSize(), Utils.ANSI_WHITE +  "Extracted: " + Utils.ANSI_BLACK + charactersRead);
+					totalcharactersRead += charactersRead;
 
 					if(cs.hasFileEnded()) {
-						Utils.debugMsg(-1, "Suicidaton bailable!");
+						Utils.debugMsg(site.getId(), "Suicidaton bailable!");
 						reader.killEveryone();
+						break;
 					}
 
-					Utils.debugMsg(-1, "\nMe canse.");
+					site.releaseCriticalSection();
+
+					site.showState();
 					cs.waitMeIAmTired();
 				}
 
 			}
-
-			System.out.println(charactersRead);
 		} catch(SocketException e) {
-			Utils.debugErr(-1, "SocketException: RMI se cayo.");
+			Utils.debugErr(myId, "SocketException: RMI se cayo.");
 		} catch(ConnectException e) {
-			Utils.debugErr(-1, "ConnectException: RMI se cayo.");
+			Utils.debugErr(myId, "ConnectException: RMI se cayo.");
 		} catch(UnmarshalException e) {
-			Utils.debugErr(-1, "ConnectException: RMI se cayo.");
+			Utils.debugErr(myId, "UnmarshalException: RMI se cayo.");
 		}
 
-		Utils.debugMsg(-1, "Terminando el programa.");
+		colorPrintln(cs.getFileSize(), reader.originalSize(), Utils.ANSI_WHITE +  "Total extracted: " + Utils.ANSI_BLACK + totalcharactersRead);
+
+		System.out.println("Terminando el proceso.");
+		System.exit(0);
 	}
 }

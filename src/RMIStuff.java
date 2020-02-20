@@ -13,7 +13,9 @@ public class RMIStuff
 		if(bearer.equalsIgnoreCase("True")) {
 			try {
 				Reader reader = new Extractor(processes, filesize);
+				Utils.debugMsg(-1, "Creando registro RMI en puerto " + rmiPort + ".");
 				LocateRegistry.createRegistry(rmiPort);
+				Utils.debugMsg(-1, "Bindeando objecto.");
 				Naming.rebind(rmiReaderUrl, reader);
 				return reader;
 			} catch (RemoteException e) {
@@ -28,6 +30,7 @@ public class RMIStuff
 		Reader reader = null;
 		while(reader == null) {
 			try {
+				Utils.debugMsg(-1, "Buscando objeto.");
 				reader = (Reader)Naming.lookup(rmiReaderUrl);  
 			} catch (RemoteException e){ // En caso de que este proceso haya sido invocado antes que el `bearer`.
 				System.out.println("El bearer todavia no configura el RMI...");

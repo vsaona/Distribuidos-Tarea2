@@ -1,17 +1,22 @@
 import java.rmi.*;
 import java.rmi.server.UnicastRemoteObject;
+
+import javax.naming.SizeLimitExceededException;
+
 import java.lang.Math;
 
 class Site extends UnicastRemoteObject implements SiteInterface
 {
     private static final long serialVersionUID = 8575564069279616010L;
 
-    private Extractor reader;
-    private int myId;
+    private Reader reader;
+    private int processes;
+    private int myId = -1;
     private Integer[] RN;
     private boolean hasToken = false;
     private boolean isExcuting = false;
     private boolean isRequesting = false;
+    private boolean isWaiting = false;
 
     boolean everythingIsFine = true;
 
@@ -20,32 +25,86 @@ class Site extends UnicastRemoteObject implements SiteInterface
 		super();
     }
 
-    public Site(Extractor reader, int procesess, int myId) throws RemoteException
+    public Site(Reader reader, int procesess) throws RemoteException
     {
-		super();
+        super();
+        assert(reader != null);
         this.reader = reader;
-        this.myId = myId;
-        assert(myId < procesess);
+        this.processes = procesess;
         this.RN = new Integer[procesess];
         for(int i = 0; i < procesess; ++i){
             this.RN[i] = 0;
         }
     }
 
+    public void setId(int id, int bearerProcesess) throws RemoteException, RuntimeException, SizeLimitExceededException
+    {
+        if(myId >= 0) {
+            throw new RuntimeException("Can't re-set Site's id.");
+        }
+        if(id >= processes) {
+			throw new SizeLimitExceededException("Maximum amount of processes reached (" + processes + ").");
+        }
+        if(processes != bearerProcesess) {
+            throw new RuntimeException("Processes amount mismatch.");
+        }
+        this.myId = id;
+    }
+
+    public int getId()
+    {
+        assert(isInValidState());
+        return myId;
+    }
+
+    public void showState()
+    {
+        // TODO: mostrar RN
+        if(!isExcuting && !isRequesting) {
+            Utils.cyanPrintln(Utils.ANSI_WHITE + "Ocioso.");
+        } else if(isRequesting) {
+            Utils.purplePrintln(Utils.ANSI_WHITE + "Esperando token.");
+        } else {
+            Utils.whitePrintln(Utils.ANSI_BLACK + "Seccion critica.");
+            /*
+            long percentage = 100*remainingSize/reader.originalSize();
+            if(percentage < 25) {
+                Utils.redPrintln(msg);
+            } else if(percentage < 50) {
+                Utils.yellowPrintln(msg);
+            } else if(percentage < 75) {
+                Utils.greenPrintln(msg);
+            } else {
+                Utils.bluePrintln(msg);
+            }*/
+        }
+    }
+
     boolean _isInValidState()
     {
+        if(myId < 0) {
+            return false;
+        }
         if(hasToken) {
             if(isExcuting) {
                 if(isRequesting) {
                     return false;
                 } else {
-                    return true;
+                    if(isWaiting) {
+                        return false;
+                    } else {
+                        return true;
+                    }
                 }
             } else {
                 if(isRequesting) {
                     return false;
                 } else {
-                    return true;
+                    if(isWaiting) {
+                        return false;
+                    } else {
+                        return true;
+                    }
                 }
             }
         } else {
@@ -72,33 +131,35 @@ class Site extends UnicastRemoteObject implements SiteInterface
     public int giveMeTheRNof(int id) throws RemoteException
     {
         assert(isInValidState());
+        assert(id < processes);
         return RN[id];
     }
 
-    public boolean didIRequestTheCriticalSection() throws RemoteException
+    public boolean didIRequestTheCriticalSection()
     {
         assert(isInValidState());
-        return isRequesting;
+        return isRequesting || hasToken;
     }
 
+    // change to `requestToken()` (?)
     public void requestCriticalSection() throws RemoteException
     {
         assert(isInValidState());
+        Utils.debugMsg(myId, "Pidiendo seccion critica...");
         if(!hasToken && !isRequesting) {
             try {
-                Utils.debugMsg(myId, "Gente! Quiero el token!");
+                Utils.debugMsg(myId, "@everyone Quiero el token!");
                 RN[myId] = RN[myId] + 1;
                 isRequesting = true;
                 reader.request(myId, RN[myId]);
             } catch (RemoteException e) {
                 System.err.println(e.toString());
-                // e.printStackTrace(System.err);
                 reader.killEveryone();
             }
         }
     }
 
-    public void receiveExternalRequest(int i, int sn) throws RemoteException
+    public boolean receiveExternalRequest(int i, int sn) throws RemoteException
     {
         assert(isInValidState());
         assert(i < RN.length);
@@ -112,15 +173,16 @@ class Site extends UnicastRemoteObject implements SiteInterface
                 if(reader.sendTokenTo(i, RN[i])) {
                     Utils.debugMsg(myId, i + " acepto el token.");
                     hasToken = false;
+                    return true;
                 } else {
                     Utils.debugMsg(myId, i + " no acepto el token, por lo tanto me lo quedo yo.");
                 }
             } catch (RemoteException e) {
                 System.err.println(e.toString());
-                // e.printStackTrace(System.err);
                 reader.killEveryone();
             }
         }
+        return false;
     }
 
     public void takeToken() throws RemoteException
@@ -129,63 +191,82 @@ class Site extends UnicastRemoteObject implements SiteInterface
         Utils.debugMsg(myId, "Me acaba de llegar el token y lo acepte.");
         hasToken = true;
         isRequesting = false;
+        isWaiting = false;
+    }
+
+    public void waitToken() throws RemoteException
+    {
+        assert(isInValidState());
+        Utils.debugMsg(myId, "No me quieren pasar el token, asi que esperare.");
+        isWaiting = true;
+    }
+
+    public void kill() throws RemoteException
+    {
+        everythingIsFine = false;
     }
 
     public void releaseCriticalSection() throws RemoteException
     {
         assert(isInValidState());
-        try {
-            Utils.debugMsg(myId, "Gente! Ya no estoy usando el token!");
-            if(hasToken && !isExcuting && reader.releaseCriticalSection(myId)) {
-                Utils.debugMsg(myId, "Solte el token c:");
-                hasToken = false;
+        Utils.debugMsg(myId, "@everyone Ya no estoy usando el token!");
+        if(hasToken && !isExcuting) {
+            try {
+                if(reader.releaseCriticalSection(myId)) {
+                    Utils.debugMsg(myId, "Solte el token c:");
+                    hasToken = false;
+                } else {
+                    Utils.debugMsg(myId, "Nadie queria el token, asi que me lo quede.");
+                }
+            } catch(RemoteException e) {
+                System.err.println(e.toString());
+                reader.killEveryone();
             }
-        } catch(RemoteException e) {
-            System.err.println(e.toString());
-            // e.printStackTrace(System.err);
+        } else {
+            Utils.debugMsg(myId, "Me bugie.");
             reader.killEveryone();
         }
     }
 
-    public boolean canIExecuteTheCriticalSection() throws RemoteException
+    public boolean amIWaiting()
+    {
+        assert(isInValidState());
+        return isWaiting;
+    }
+
+    public boolean canIExecuteTheCriticalSection()
     {
         assert(isInValidState());
         return hasToken;
     }
 
-    public void startExecutingTheCriticalSection() throws RemoteException
+    public void startExecutingTheCriticalSection()
     {
         assert(isInValidState());
         assert(hasToken && !isExcuting);
+        Utils.debugMsg(myId, "Voy a empezar la seccion critica");
         isExcuting = true;
     }
 
-    public void finishTheExecutionOfTheCriticalSection() throws RemoteException
+    public void finishTheExecutionOfTheCriticalSection()
     {
         assert(isInValidState());
-        assert(hasToken && isExcuting);
+        Utils.debugMsg(myId, "Termine la seccion critica");
         isExcuting = false;
     }
 
-    public boolean amIExecutingTheCriticalSection() throws RemoteException
+    public boolean amIExecutingTheCriticalSection()
     {
         assert(isInValidState());
-        assert(isExcuting && hasToken || !isExcuting);
         return isExcuting;
     }
 
-    public boolean shouldIKillMyself() throws RemoteException
+    public boolean shouldIKillMyself()
     {
         assert(isInValidState());
         if(!everythingIsFine){
             return true;
         }
         return false;
-    }
-
-    public int getId() throws RemoteException
-    {
-        assert(isInValidState());
-        return myId;
     }
 }

@@ -13,7 +13,7 @@ class CriticalSection
     private String fileName;
     private int capacity;
     private long milisecondsPerChar;
-    private SiteInterface site = null;
+    private Site site = null;
 
     private boolean fileHasEnded;
 
@@ -28,7 +28,7 @@ class CriticalSection
         }
     }
 
-    public void setSite(SiteInterface site)
+    public void setSite(Site site)
     {
         assert(site != null);
         this.site = site;
@@ -43,9 +43,13 @@ class CriticalSection
     public String executeCriticalSection() throws RemoteException, IOException, InterruptedException 
     {
         assert(site != null);
-        assert(site.amIExecutingTheCriticalSection());
+        String charactersRead;
 
-        Utils.debugMsg(-1, "Entre al metodo de la seccion critica.");
+        site.startExecutingTheCriticalSection();
+
+        assert(site.amIExecutingTheCriticalSection());
+        Utils.debugMsg(site.getId(), "Empece la seccion critica");
+        site.showState();
         try {
             BufferedReader reader = new BufferedReader(new InputStreamReader(new FileInputStream(fileName)));
             int c;
@@ -57,17 +61,22 @@ class CriticalSection
                     this.fileHasEnded = true;
                     break;
                 }
-                Utils.debugMsg(-1, i + "/" + capacity + ": " + (char)c);
+
+                Utils.debugMsg(site.getId(), i + "/" + capacity + ": " + (char)c);
                 characters[i++] = (char)c;
-                Utils.sleep(-1, milisecondsPerChar);
+
+                Utils.sleep(site.getId(), milisecondsPerChar);
             }
             reader.close();
             updateFile();
-            Utils.debugMsg(-1, "Estoy saliendo del metodo de la seccion critica.\n");
-            return new String(characters);
+
+            charactersRead = new String(characters);
+
         } catch(IOException e) {
             throw new IOException(e.getMessage());
         }
+        site.finishTheExecutionOfTheCriticalSection();
+        return charactersRead;
     }
 
     private void updateFile() throws IOException
@@ -78,14 +87,16 @@ class CriticalSection
                 return;
             }
             char characters[] = new char[filesize];
-            Utils.debugMsg(-1, "Borrando " + capacity + " caracteres del archivo (" + filesize + ").");
+            Utils.debugMsg(site.getId(), "Borrando " + capacity + " caracteres del archivo (" + filesize + ").");
 
             BufferedReader reader = new BufferedReader(new InputStreamReader(new FileInputStream(fileName)));
             reader.read(characters);
             reader.close();
 
             BufferedWriter writer = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(fileName)));
-            writer.write(characters, capacity, Math.max(filesize - capacity, 0));
+            if(filesize - capacity > 0) {
+                writer.write(characters, capacity, filesize - capacity);
+            }
             writer.close();
         } catch(IOException e) {
             throw new IOException(e.getMessage());
@@ -94,7 +105,8 @@ class CriticalSection
 
     public void waitMeIAmTired() throws InterruptedException 
     {
-        Utils.sleep(-1, capacity*1000/2);
+        Utils.debugMsg(site.getId(), "\nMe canse.");
+        Utils.sleep(site.getId(), capacity*1000/2);
     }
 
     public boolean hasFileEnded()

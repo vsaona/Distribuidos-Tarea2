@@ -36,12 +36,14 @@ class Utils
     public static void sleep(int processId, long millis) throws InterruptedException
     {
         try {
-            if(enableSleepMsgDebug) {
-                debugMsg(processId, "Dormire por: " + millis + "[ms]");
-            }
-            Thread.sleep(millis);
-            if(enableSleepMsgDebug) {
-                debugMsg(processId, "Desperte!\n");
+            if(millis > 0) {
+                if(enableSleepMsgDebug) {
+                    debugMsg(processId, "Dormire por: " + millis + "[ms]");
+                }
+                Thread.sleep(millis);
+                if(enableSleepMsgDebug) {
+                    debugMsg(processId, "Desperte!\n");
+                }
             }
         } catch (InterruptedException e) {
             throw new InterruptedException("A problem has ocurred when trying to sleep.\n\tprocessId: " + processId + "\n" + e.toString());
@@ -86,5 +88,20 @@ class Utils
     public static void bluePrintln(String msg)
     {
         System.out.println(ANSI_BACKGROUND_BLUE + msg + ANSI_RESET);
+    }
+
+    public static void purplePrintln(String msg)
+    {
+        System.out.println(ANSI_BACKGROUND_PURPLE + msg + ANSI_RESET);
+    }
+
+    public static void cyanPrintln(String msg)
+    {
+        System.out.println(ANSI_BACKGROUND_CYAN + msg + ANSI_RESET);
+    }
+
+    public static void whitePrintln(String msg)
+    {
+        System.out.println(ANSI_BACKGROUND_WHITE + msg + ANSI_RESET);
     }
 }

@@ -1,6 +1,8 @@
 import java.rmi.*;
 import java.rmi.server.*;
 
+import javax.naming.SizeLimitExceededException;
+
 public class Extractor extends UnicastRemoteObject implements Reader
 {
 	private static final long serialVersionUID = 5258238654722105827L;
@@ -9,7 +11,7 @@ public class Extractor extends UnicastRemoteObject implements Reader
 	Token token;
 
 	private int nextId = 0;
-	private Site[] sitesArr;
+	private SiteInterface[] sitesArr;
 
 	Extractor() throws RemoteException
 	{
@@ -22,7 +24,7 @@ public class Extractor extends UnicastRemoteObject implements Reader
 		this.processes = n;
 		this.originalFileSize = originalFileSize;
 		this.token = new Token(n);
-		this.sitesArr = new Site[n];
+		this.sitesArr = new SiteInterface[n];
 	}
 
 	public long originalSize()  throws RemoteException
@@ -32,39 +34,37 @@ public class Extractor extends UnicastRemoteObject implements Reader
 
 	public void request(Integer id, Integer seq) throws RemoteException
 	{
+		boolean didIdGotTheToken = false;
 		for(int j = 0; j < nextId; ++j){
 			if(j != id){
-				sitesArr[j].receiveExternalRequest(id, seq);
+				didIdGotTheToken = sitesArr[j].receiveExternalRequest(id, seq) || didIdGotTheToken;
 			}
 		}
-	}
-
-	public void waitToken() throws Exception
-	{
-		// TODO
-		Utils.sleep(-2, 1000);
-	}
-
-	public void kill() throws RemoteException
-	{
-		for(int i = 0; i < nextId; ++i) {
-			sitesArr[i].everythingIsFine = false;
+		if(!didIdGotTheToken) {
+			sitesArr[id].waitToken();
 		}
 	}
+
 	public void killEveryone() throws RemoteException
 	{
-		kill();
+		for(int i = 0; i < nextId; ++i) {
+			sitesArr[i].kill();
+		}
 	}
 
 
-	public SiteInterface generateSite() throws RemoteException
+	public void registerSite(SiteInterface site) throws RemoteException, SizeLimitExceededException, RuntimeException
 	{
 		assert(nextId < processes);
-		sitesArr[nextId] = new Site(this, processes, nextId);
-		if(nextId == 0) {
-			sitesArr[nextId].takeToken();
+		if(nextId >= processes) {
+			throw new SizeLimitExceededException("Maximum amount of processes reached (" + processes + ").");
 		}
-		return sitesArr[nextId++];
+		Utils.debugMsg(-1, "Llego un nuevo proceso. Asignando id " + nextId + ".");
+		site.setId(nextId, processes);
+		if(nextId == 0) {
+			site.takeToken();
+		}
+		sitesArr[nextId++] = site;
 	}
 
 	public boolean sendTokenTo(int id, int sn) throws RemoteException
@@ -84,7 +84,6 @@ public class Extractor extends UnicastRemoteObject implements Reader
 
 		for(int j = 0; j < nextId; ++j) {
 			Utils.debugMsg(id, ""+j + " ~ " + nextId);
-			//Utils.debugMsg("length: " + RN.length);
 			int left = sitesArr[id].giveMeTheRNof(j);
 			int right = token.executed[j] + 1;
 			if(left == right) {

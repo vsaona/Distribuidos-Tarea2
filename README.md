@@ -3,9 +3,9 @@ Tarea sobre algoritmo de Suzuki-Kasami
 
 
 Ejemplos de ejecución:
-- `java -ea Process 3 LoremIpsum 10 1 1500 True`
+- `java -ea Process 5 LoremIpsum 10 1 10 True`
   - `-ea` activa los `assert`. Usalo mientras desarrollas.
-- `java -ea Process 3 LoremIpsum 4 1 11 false`
+- `java -ea Process 5 LoremIpsum 6 1 1000 false`
 
 
 Referencias:
