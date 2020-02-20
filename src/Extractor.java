@@ -4,9 +4,7 @@ import java.rmi.server.*;
 public class Extractor extends UnicastRemoteObject implements Reader
 {
 	int processes;
-	String fileName;
-	int capacity;
-	int speed;
+	long originalFileSize;
 	Token token;
 
 	private int nextId = 0;
@@ -17,13 +15,11 @@ public class Extractor extends UnicastRemoteObject implements Reader
 		super();
 	}
 
-	Extractor(int n, String fileName, int capacity, int speed) throws RemoteException
+	Extractor(int n, long originalFileSize) throws RemoteException
 	{
 		super();
 		this.processes = n;
-		this.fileName = fileName;
-		this.capacity = capacity;
-		this.speed = speed;
+		this.originalFileSize = originalFileSize;
 		this.token = new Token(n);
 		this.sitesArr = new Site[n];
 	}
@@ -40,7 +36,7 @@ public class Extractor extends UnicastRemoteObject implements Reader
 	public void waitToken() throws Exception
 	{
 		// TODO
-		Utils.sleep(1000);
+		Utils.sleep(-2, 1000);
 	}
 
 	public void kill() throws RemoteException
@@ -75,19 +71,19 @@ public class Extractor extends UnicastRemoteObject implements Reader
 		return false;
 	}
 
-	public boolean releaseCriticalSection(int id, Integer[] RN) throws RemoteException
+	public boolean releaseCriticalSection(int id) throws RemoteException
 	{
 		assert(id < sitesArr.length);
-		token.executed[id] = RN[id];
+		token.executed[id] = sitesArr[id].giveMeTheRNof(id);
 
 		for(int j = 0; j < nextId; ++j) {
-			Utils.debugMsg(""+j + " ~ " + nextId);
+			Utils.debugMsg(id, ""+j + " ~ " + nextId);
 			//Utils.debugMsg("length: " + RN.length);
 			int left = sitesArr[id].giveMeTheRNof(j);
 			int right = token.executed[j] + 1;
 			if(left == right) {
-				Utils.debugMsg("Agreando a " + j + " a la cola!");
 				if(!token.queue.contains(j)) {
+					Utils.debugMsg(id, "Agreando a " + j + " a la cola.");
 					token.queue.add(j);
 				}
 			}
@@ -97,7 +93,9 @@ public class Extractor extends UnicastRemoteObject implements Reader
 			return false;
 		}
 
-		sitesArr[token.queue.remove()].takeToken();
+		int j = token.queue.remove();
+		Utils.debugMsg(id, "Mandando token a " + j + ".");
+		sitesArr[j].takeToken();
 		return true;
 	}
 }

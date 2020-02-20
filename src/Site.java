@@ -58,10 +58,10 @@ class Site extends UnicastRemoteObject implements SiteInterface
     boolean isInValidState()
     {
         if(!_isInValidState()) {
-            Utils.debugErr("\n(" + myId+ ")Site invalid state:");
-            Utils.debugErr("\t(" + myId+ ")hasToken: " + hasToken);
-            Utils.debugErr("\t(" + myId+ ")isExcuting: " + isExcuting);
-            Utils.debugErr("\t(" + myId+ ")isRequesting: " + isRequesting);
+            Utils.debugErr(myId, "Site invalid state:");
+            Utils.debugErr(myId, "\thasToken: " + hasToken);
+            Utils.debugErr(myId, "\tisExcuting: " + isExcuting);
+            Utils.debugErr(myId, "\tisRequesting: " + isRequesting);
             return false;
         }
         return true;
@@ -84,12 +84,13 @@ class Site extends UnicastRemoteObject implements SiteInterface
         assert(isInValidState());
         if(!hasToken && !isRequesting) {
             try {
-                Utils.debugMsg("(" + myId+ ")Gente! Quiero el token!");
+                Utils.debugMsg(myId, "Gente! Quiero el token!");
                 RN[myId] = RN[myId] + 1;
                 isRequesting = true;
                 reader.request(myId, RN[myId]);
             } catch (RemoteException e) {
-                e.printStackTrace(System.err);
+                System.err.println(e.toString());
+                // e.printStackTrace(System.err);
                 reader.killEveryone();
             }
         }
@@ -100,20 +101,22 @@ class Site extends UnicastRemoteObject implements SiteInterface
         assert(isInValidState());
         assert(i < RN.length);
         assert(i != myId);
-        Utils.debugMsg("(" + myId+ ") Recibi un request de " + i + " con un sn de " + sn);
+        Utils.debugMsg(myId, "Recibi un request de " + i + " con un sn de " + sn);
         RN[i] = Math.max(RN[i], sn);
 
         if(!isExcuting && hasToken) {
             try {
-                Utils.debugMsg("(" + myId+ ") Tengo el token y no lo estoy usando, se lo mandare a " + i);
+                Utils.debugMsg(myId, "Tengo el token y no lo estoy usando, se lo mandare a " + i + ".");
                 if(reader.sendTokenTo(i, RN[i])) {
-                    Utils.debugMsg("(" + myId + ") " + i + " acepto el token.");
+                    Utils.debugMsg(myId, i + " acepto el token.");
                     hasToken = false;
                 } else {
-                    Utils.debugMsg("(" + myId + ") " + i + " no acepto el token, por lo que me lo quedo yo.");
+                    Utils.debugMsg(myId, i + " no acepto el token, por lo tanto me lo quedo yo.");
                 }
             } catch (RemoteException e) {
-                e.printStackTrace(System.err);
+                System.err.println(e.toString());
+                // e.printStackTrace(System.err);
+                reader.killEveryone();
             }
         }
     }
@@ -121,7 +124,7 @@ class Site extends UnicastRemoteObject implements SiteInterface
     public void takeToken() throws RemoteException
     {
         assert(isInValidState());
-        Utils.debugMsg("(" + myId + ") Me acaba de llegar el token y lo acepte");
+        Utils.debugMsg(myId, "Me acaba de llegar el token y lo acepte.");
         hasToken = true;
         isRequesting = false;
     }
@@ -130,11 +133,15 @@ class Site extends UnicastRemoteObject implements SiteInterface
     {
         assert(isInValidState());
         try {
-            if(hasToken && !isExcuting && reader.releaseCriticalSection(myId, RN)) {
+            Utils.debugMsg(myId, "Gente! Ya no estoy usando el token!");
+            if(hasToken && !isExcuting && reader.releaseCriticalSection(myId)) {
+                Utils.debugMsg(myId, "Solte el token c:");
                 hasToken = false;
             }
         } catch(RemoteException e) {
-            e.printStackTrace(System.err);
+            System.err.println(e.toString());
+            // e.printStackTrace(System.err);
+            reader.killEveryone();
         }
     }
 

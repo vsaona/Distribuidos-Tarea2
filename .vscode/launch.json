@@ -9,7 +9,7 @@
             "name": "Debug (Launch) - Current File",
             "request": "launch",
             "mainClass": "${file}",
-            "args": ["3", "src/Makefile", "80", "1", "1500", "True"]
+            "args": ["3", "src/LoremIpsum", "80", "1", "1500", "True"]
         },
         {
             "type": "java",
@@ -17,7 +17,7 @@
             "request": "launch",
             "mainClass": "Process",
             "projectName": "Distribuidos-Tarea2_5e482733",
-            "args": ["3", "src/Makefile", "80", "1", "1500", "True"]
+            "args": ["3", "src/LoremIpsum", "80", "1", "1500", "True"]
         }
     ]
 }

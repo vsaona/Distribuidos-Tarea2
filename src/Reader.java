@@ -10,5 +10,5 @@ public interface Reader extends Remote
 	public SiteInterface generateSite() throws RemoteException;
 	public boolean sendTokenTo(int id, int sn) throws RemoteException;
 	/// Returns true if token has been sended to other process.
-	public boolean releaseCriticalSection(int id, Integer[] RN) throws RemoteException;
+	public boolean releaseCriticalSection(int id) throws RemoteException;
 }
