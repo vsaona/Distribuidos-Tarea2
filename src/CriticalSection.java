@@ -6,7 +6,6 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.OutputStreamWriter;
-import java.rmi.RemoteException;
 
 class CriticalSection
 {
@@ -40,7 +39,7 @@ class CriticalSection
         return f.length();
     }
 
-    public String executeCriticalSection() throws RemoteException, IOException, InterruptedException 
+    public String executeCriticalSection() throws IOException, InterruptedException 
     {
         assert(site != null);
         String charactersRead;
@@ -51,26 +50,7 @@ class CriticalSection
         Utils.debugMsg(site.getId(), "Empece la seccion critica");
         site.showState();
         try {
-            BufferedReader reader = new BufferedReader(new InputStreamReader(new FileInputStream(fileName)));
-            int c;
-            int i = 0;
-            char characters[] = new char[capacity];
-            while(i < capacity) {
-                c = reader.read();
-                if(c == -1){
-                    this.fileHasEnded = true;
-                    break;
-                }
-
-                Utils.debugMsg(site.getId(), i + "/" + capacity + ": " + (char)c);
-                characters[i++] = (char)c;
-
-                Utils.sleep(site.getId(), milisecondsPerChar);
-            }
-            reader.close();
-            updateFile();
-
-            charactersRead = new String(characters);
+            charactersRead = criticalSection();
 
         } catch(IOException e) {
             throw new IOException(e.getMessage());
@@ -79,28 +59,41 @@ class CriticalSection
         return charactersRead;
     }
 
-    private void updateFile() throws IOException
+    private String criticalSection() throws IOException, InterruptedException
     {
-        try {
-            int filesize = (int)getFileSize();
-            if(filesize == 0) {
-                return;
-            }
-            char characters[] = new char[filesize];
-            Utils.debugMsg(site.getId(), "Borrando " + capacity + " caracteres del archivo (" + filesize + ").");
-
-            BufferedReader reader = new BufferedReader(new InputStreamReader(new FileInputStream(fileName)));
-            reader.read(characters);
-            reader.close();
-
-            BufferedWriter writer = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(fileName)));
-            if(filesize - capacity > 0) {
-                writer.write(characters, capacity, filesize - capacity);
-            }
-            writer.close();
-        } catch(IOException e) {
-            throw new IOException(e.getMessage());
+        int actualFilesize = (int)getFileSize();
+        if(actualFilesize == 0) {
+            this.fileHasEnded = true;
+            return "";
         }
+
+        char cbuff[] = new char[capacity];
+        char tail[];
+        if(capacity >= actualFilesize) {
+            tail = new char[1];
+            this.fileHasEnded = true;
+        } else {
+            tail = new char[actualFilesize-capacity];
+        }
+
+        BufferedReader reader = new BufferedReader(new InputStreamReader(new FileInputStream(fileName)));
+        reader.read(cbuff, 0, capacity);
+        if(!this.fileHasEnded) {
+            reader.read(tail);
+        }
+        reader.close();
+
+        BufferedWriter writer = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(fileName)));
+        if(!this.fileHasEnded) {
+            writer.write(tail);
+        }
+        writer.close();
+
+        for(int i = 0; i < capacity; ++i) {
+            Utils.debugMsg(site.getId(), i + "/" + capacity + ": " + (char)cbuff[i]);
+            Utils.sleep(site.getId(), milisecondsPerChar);
+        }
+        return new String(cbuff);
     }
 
     public void waitMeIAmTired() throws InterruptedException 
