@@ -30,12 +30,10 @@ public class RMIStuff
 			try {
 				reader = (Reader)Naming.lookup(rmiReaderUrl);  
 			} catch (RemoteException e){ // En caso de que este proceso haya sido invocado antes que el `bearer`.
-				// e.printStackTrace(System.err);
 				System.out.println("El bearer todavia no configura el RMI...");
 			} catch (NotBoundException e){
 				System.out.println("El objeto todavia no ha sido registrado en el RMI...");
 			}
-			
 			Utils.sleep(-1, 1000);
 		}
 		return reader;

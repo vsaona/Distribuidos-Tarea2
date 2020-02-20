@@ -3,6 +3,7 @@ import java.rmi.server.*;
 
 public class Extractor extends UnicastRemoteObject implements Reader
 {
+	private static final long serialVersionUID = 5258238654722105827L;
 	int processes;
 	long originalFileSize;
 	Token token;
@@ -22,6 +23,11 @@ public class Extractor extends UnicastRemoteObject implements Reader
 		this.originalFileSize = originalFileSize;
 		this.token = new Token(n);
 		this.sitesArr = new Site[n];
+	}
+
+	public long originalSize()  throws RemoteException
+	{
+		return originalFileSize;
 	}
 
 	public void request(Integer id, Integer seq) throws RemoteException

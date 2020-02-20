@@ -4,6 +4,8 @@ import java.lang.Math;
 
 class Site extends UnicastRemoteObject implements SiteInterface
 {
+    private static final long serialVersionUID = 8575564069279616010L;
+
     private Extractor reader;
     private int myId;
     private Integer[] RN;

@@ -7,6 +7,20 @@ import java.rmi.UnmarshalException;
 
 public class Process
 {
+	public static void colorPrintln(long remainingSize, long originalSize, String msg)
+	{
+		long percentage = 100*remainingSize/originalSize;
+		if(percentage < 25) {
+			Utils.redPrintln(msg);
+		} else if(percentage < 50) {
+			Utils.yellowPrintln(msg);
+		} else if(percentage < 75) {
+			Utils.greenPrintln(msg);
+		} else {
+			Utils.bluePrintln(msg);
+		}
+	}
+
 	public static void main(String[] args) throws InterruptedException, RemoteException, MalformedURLException, IOException
 	{
 		Utils.enableDebug = true;
@@ -44,11 +58,15 @@ public class Process
 				if(site.canIExecuteTheCriticalSection()) {
 					Utils.debugMsg(-1, "Voy a empezar la seccion critica");
 					site.startExecutingTheCriticalSection();
+
 					Utils.debugMsg(-1, "Empece la seccion critica");
 					String asdf = cs.executeCriticalSection();
-					Utils.debugMsg(-1, "Termine la seccion critica");
+
 					Utils.debugMsg(-1, "Lei: " + asdf);
+					colorPrintln(cs.getFileSize(), reader.originalSize(), Utils.ANSI_WHITE +  "Extracted: " + Utils.ANSI_BLACK + asdf);
 					charactersRead += asdf;
+
+					Utils.debugMsg(-1, "Termine la seccion critica");
 					site.finishTheExecutionOfTheCriticalSection();
 
 					Utils.debugMsg(-1, "Gente, ya termine!");
