@@ -23,7 +23,7 @@ class CriticalSection
         this.milisecondsPerChar = (long)(1000f/((double)speed));
         this.fileHasEnded = false;
         if(!(new File(fileName)).exists()) {
-            throw new IOException("File '" + fileName + "' does not exists.");
+            throw new IOException("No existe el archivo '" + fileName + "'.");
         }
     }
 
@@ -46,14 +46,13 @@ class CriticalSection
 
         site.startExecutingTheCriticalSection();
 
-        assert(site.amIExecutingTheCriticalSection());
         Utils.debugMsg(site.getId(), "Empece la seccion critica");
         site.showState();
         try {
             charactersRead = criticalSection();
             Utils.colorPrintln(getFileSize(), site.getOriginalSize(), Utils.ANSI_WHITE +  "Extraje: " + Utils.ANSI_BLACK + charactersRead);
         } catch(IOException e) {
-            // site.killEveryone();
+            site.killEveryone();
             throw new IOException(e.getMessage());
         }
         site.finishTheExecutionOfTheCriticalSection();

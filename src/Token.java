@@ -1,26 +1,49 @@
+import java.io.Serializable;
 import java.util.LinkedList;
 import java.util.Queue;
 
-public class Token {
-	public Integer[] executed;
-	public Queue<Integer> queue;
+public class Token implements Serializable
+{
+	private static final long serialVersionUID = -6085235567096462778L;
 
-	public Token(Integer n) 
+	private int[] LN;
+	private Queue<Integer> queue;
+
+	public Token(int n) 
 	{
-		executed = new Integer[n];
+		LN = new int[n];
 		for(int i = 0; i < n; ++i){
-			executed[i] = 0;
+			LN[i] = 0;
 		}
 		queue = new LinkedList<>();
 	}
 
-	public void request(Integer id)
+	public int getLN(int i)
 	{
-		this.queue.add(id);
+		assert(i < LN.length);
+		return LN[i];
 	}
 
-	public Integer getNextId()
+	public void setLN(int i, int sn)
 	{
-		return(this.queue.remove());
+		assert(i < LN.length);
+		LN[i] = sn;
+	}
+
+	public void addToQueue(int id)
+	{
+		if(!queue.contains(id)) {
+			queue.add(id);
+		}
+	}
+
+	public boolean isQueueEmpty()
+	{
+		return queue.isEmpty();
+	}
+
+	public int getNextId()
+	{
+		return this.queue.remove();
 	}
 }

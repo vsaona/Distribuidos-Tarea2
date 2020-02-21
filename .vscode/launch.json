@@ -9,7 +9,7 @@
             "name": "Debug (Launch) - Current File",
             "request": "launch",
             "mainClass": "${file}",
-            "args": ["3", "src/LoremIpsum", "80", "1", "1500", "True"],
+            "args": ["5", "src/LoremIpsum", "10", "1", "1500", "True"],
             "vmArgs": "-ea",
         },
         {
@@ -18,7 +18,7 @@
             "request": "launch",
             "mainClass": "Process",
             "projectName": "Distribuidos-Tarea2_5e482733",
-            "args": ["3", "src/LoremIpsum", "5", "2", "5", "True"],
+            "args": ["5", "src/LoremIpsum", "10", "2", "5", "True"],
             "vmArgs": "-ea",
         },
         {

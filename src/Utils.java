@@ -105,6 +105,11 @@ class Utils
         System.out.println(ANSI_BACKGROUND_WHITE + msg + ANSI_RESET);
     }
 
+    public static void blackPrintln(String msg)
+    {
+        System.out.println(ANSI_BACKGROUND_BLACK + msg + ANSI_RESET);
+    }
+
 	public static void colorPrintln(long remainingSize, long originalSize, String msg)
 	{
 		long percentage = 0;

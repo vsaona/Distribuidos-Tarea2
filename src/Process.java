@@ -1,15 +1,11 @@
 import java.io.IOException;
-import java.net.MalformedURLException;
 import java.net.SocketException;
 import java.rmi.ConnectException;
-import java.rmi.RemoteException;
 import java.rmi.UnmarshalException;
-
-import javax.naming.SizeLimitExceededException;
 
 public class Process
 {
-	public static void main(String[] args) throws InterruptedException, RemoteException, MalformedURLException, IOException, SizeLimitExceededException
+	public static void main(String[] args) throws IOException, InterruptedException
 	{
 		Utils.enableDebug = true;
 
@@ -18,30 +14,41 @@ public class Process
 		int capacity = Integer.parseInt(args[2]);
 		int speed = Integer.parseInt(args[3]);
 		int delay = Integer.parseInt(args[4]);
+		boolean bearer = args[5].equalsIgnoreCase("True");
 		if(delay > 0) {
 			System.out.println("Delay: " + delay + "[ms]");
 			Utils.sleep(-1, delay);
 		}
 
+		int myId = -1;
 		CriticalSection cs = new CriticalSection(fileName, capacity, speed);
-		Reader reader = RMIStuff.setupRemoteMethod(args[5], processes, cs.getFileSize());
-		if(reader == null) {
-			reader = RMIStuff.getRemoteReader();
+		RMIStuff rmi = null;
+		Site site = null;
+		try {
+			rmi = new RMIStuff(bearer);
+			if(bearer) {
+				myId = 0;
+				site = new Site(rmi, processes, myId, cs.getFileSize());
+			} else {
+				SiteInterface site0 = (SiteInterface)rmi.getObject(0);
+				myId = site0.generateNewId();
+				site = new Site(rmi, processes, myId, site0.getOriginalSize());
+			}
+			rmi.setObject(myId, site);
+			cs.setSite(site);
+			System.out.println("Mi id es: " + myId);
+		} catch(Exception e) {
+			System.err.println(e.toString());
+			System.exit(-1);
 		}
 
-		int myId = -1;
 		String totalcharactersRead = "";
 		try {
-			Site site = new Site(reader, processes);
-			reader.registerSite(site);
-			cs.setSite(site);
-			myId = site.getId();
-			System.out.println("Mi id es: " + myId);
 			site.showState();
 
 			while(!cs.hasFileEnded()) {
 				if(site.shouldIKillMyself()) {
-					Utils.debugMsg(-1, "Suicidaton!");
+					Utils.debugMsg(myId, "Me mori :s");
 					System.out.println("No quedan caracteres en el archivo.");
 					break;
 				}
@@ -50,8 +57,8 @@ public class Process
 					Thread.sleep(50);
 				}
 
-				if(!site.didIRequestTheCriticalSection()) {
-					site.requestCriticalSection();
+				if(!site.didIRequestTheToken()) {
+					site.makeTokenRequest();
 					site.showState();
 				}
 
@@ -60,28 +67,34 @@ public class Process
 
 					if(cs.hasFileEnded()) {
 						Utils.debugMsg(site.getId(), "Suicidaton bailable!");
-						reader.killEveryone();
+						site.killEveryone();
 						break;
 					}
 
-					site.releaseCriticalSection();
+					site.releaseToken();
 
 					site.showState();
 					cs.waitMeIAmTired();
 				}
-
 			}
 		} catch(SocketException e) {
-			Utils.debugErr(myId, "SocketException: RMI se cayo.");
+			System.err.println(e.toString());
+			System.err.println("SocketException: RMI se cayo.");
 		} catch(ConnectException e) {
-			Utils.debugErr(myId, "ConnectException: RMI se cayo.");
+			System.err.println(e.toString());
+			System.err.println("ConnectException: RMI se cayo.");
 		} catch(UnmarshalException e) {
-			Utils.debugErr(myId, "UnmarshalException: RMI se cayo.");
+			System.err.println(e.toString());
+			System.err.println("UnmarshalException: RMI se cayo.");
+		} catch(Exception e){
+			// Capturamos todas las excepciones para que el programa pueda finalizar.
+			System.err.println(e.toString());
 		}
 
 		Utils.cyanPrintln(Utils.ANSI_WHITE +  "Total de caracteres extraidos: " + Utils.ANSI_BLACK + totalcharactersRead);
 
 		System.out.println("Terminando el proceso.");
+		site.killEveryone();
 		System.exit(0);
 	}
 }

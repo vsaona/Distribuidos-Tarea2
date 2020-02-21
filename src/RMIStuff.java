@@ -1,44 +1,72 @@
-import java.net.MalformedURLException;
 import java.rmi.*;
 import java.rmi.registry.*;
 
 public class RMIStuff
 {
+	public static int waitTime = 1000;
 	public static final int rmiPort = 0xA1F;
-	public static final String rmiUrl = "rmi://localhost:" + rmiPort + "/";
-	public static final String rmiReaderUrl = rmiUrl + "tareaDeDistribuidos.exe";
+	public static final String baseName = "tareaDeDistribuidos.exe/";
 
-	public static Reader setupRemoteMethod(String bearer, int processes, long filesize) throws RemoteException, MalformedURLException
+	Registry reg;
+
+	public RMIStuff(boolean bearer) throws RemoteException, InterruptedException
 	{
-		if(bearer.equalsIgnoreCase("True")) {
-			try {
-				Reader reader = new Extractor(processes, filesize);
-				Utils.debugMsg(-1, "Creando registro RMI en puerto " + rmiPort + ".");
-				LocateRegistry.createRegistry(rmiPort);
-				Utils.debugMsg(-1, "Bindeando objecto.");
-				Naming.rebind(rmiReaderUrl, reader);
-				return reader;
-			} catch (RemoteException e) {
-				throw new RemoteException(e.toString());
-			}
+		if(bearer) {
+			reg = createRegistry();
+		} else {
+			reg = getRegistry();
 		}
-		return null;
 	}
 
-	public static Reader getRemoteReader() throws InterruptedException, MalformedURLException
+	public void setObject(int objId, Remote obj) throws RemoteException
 	{
-		Reader reader = null;
-		while(reader == null) {
+		try {
+			Utils.debugMsg(-1, "Bindeando objecto en la posicion " + objId + ".");
+			reg.rebind(baseName + objId, obj);
+		} catch (RemoteException e) {
+			throw new RemoteException(e.toString());
+		}
+	}
+	
+	public Remote getObject(int objId) throws RemoteException, InterruptedException
+	{
+		Remote obj = null;
+		while(obj == null) {
 			try {
-				Utils.debugMsg(-1, "Buscando objeto.");
-				reader = (Reader)Naming.lookup(rmiReaderUrl);  
-			} catch (RemoteException e){ // En caso de que este proceso haya sido invocado antes que el `bearer`.
-				System.out.println("El bearer todavia no configura el RMI...");
+				Utils.debugMsg(-1, "Buscando el objeto " + objId + ".");
+				obj = reg.lookup(baseName + objId);
 			} catch (NotBoundException e){
 				System.out.println("El objeto todavia no ha sido registrado en el RMI...");
 			}
-			Utils.sleep(-1, 1000);
+			Utils.sleep(-1, waitTime);
 		}
-		return reader;
+		return obj;
+	}
+
+	private static Registry createRegistry() throws RemoteException
+	{
+		Registry reg = null;
+		try {
+			Utils.debugMsg(-1, "Creando registro RMI en puerto " + rmiPort + ".");
+			reg = LocateRegistry.createRegistry(rmiPort);
+		} catch (RemoteException e) {
+			throw new RemoteException(e.toString());
+		}
+		return reg;
+	}
+
+	private static Registry getRegistry() throws RemoteException, InterruptedException
+	{
+		Registry reg = null;
+		while(reg == null) {
+			try {
+				Utils.debugMsg(-1, "Buscando registro.");
+				reg = LocateRegistry.getRegistry(rmiPort);
+			} catch (RemoteException e){ // En caso de que este proceso haya sido invocado antes que el `bearer`.
+				System.out.println("El bearer todavia no configura el RMI...");
+			}
+			Utils.sleep(-1, waitTime);
+		}
+		return reg;
 	}
 }
