@@ -1,5 +1,6 @@
 import java.rmi.RemoteException;
 
+import javax.management.relation.InvalidRelationIdException;
 import javax.naming.SizeLimitExceededException;
 
 public class SitesHandler
@@ -7,14 +8,16 @@ public class SitesHandler
     private int processes;
     private int myId;
 
-    private int nextId = 1;
+    private int lastGeneratedId = 0;
+    private int registeredIds = 1;
     private int[] RN;
     private SiteInterface[] sitesArr;
 
-    public SitesHandler(Site site, RMIStuff rmi, int processes, int myId) throws SizeLimitExceededException, RemoteException, InterruptedException
+    public SitesHandler(Site site, RMIStuff rmi, int processes, int myId) throws SizeLimitExceededException, RemoteException, InterruptedException, InvalidRelationIdException
     {
+        assert(myId >= 0);
         if(myId >= processes) {
-		throw new SizeLimitExceededException("Maximum amount of processes reached (" + processes + ").");
+		    throw new SizeLimitExceededException("Maximum amount of processes reached (" + processes + ").");
         }
         this.processes = processes;
         this.myId = myId;
@@ -29,24 +32,24 @@ public class SitesHandler
         for(int i = 0; i < myId; ++i) {
             this.sitesArr[i] = (SiteInterface)rmi.getObject(i);
             this.sitesArr[i].registerMe(site);
-            ++this.nextId;
+            ++this.registeredIds;
         }
     }
 
     public int getRN(int i)
     {
-        assert(i < nextId);
+        assert(i < registeredIds);
         return RN[i];
     }
 
     public SiteInterface getSite(int i) throws RemoteException
     {
-        assert(i < nextId);
+        assert(i < registeredIds);
         SiteInterface site = sitesArr[i];
         if(site == null) {
             throw new IllegalStateException("El Site " + i + " es null, pero no deberia serlo.");
         }
-        int siteId =site.getId();
+        int siteId = site.getId();
         if(site.getId() != i) {
             throw new IllegalStateException("El Site con id " + siteId + " estaba guardado en la posicion " + i + ".");
         }
@@ -54,39 +57,44 @@ public class SitesHandler
     }
 
     public String rnAsStr()
-    {   
-        String RNstr = "[(0, " + RN[0] + ")";
-        for(int i = 1; i < RN.length; ++i) {
-            RNstr += ", (" + i + ", " + RN[i] + ")";
-        }
-        RNstr += "]";
-        return RNstr;
+    {
+        return Utils.arrayToStr(RN);
     }
 
     public int generateNewId() throws SizeLimitExceededException
     {
         assert(myId == 0);
-        if(nextId >= processes) {
-		throw new SizeLimitExceededException("Maximum amount of processes reached (" + processes + ").");
+        if(registeredIds >= processes) {
+		    throw new SizeLimitExceededException("Maximum amount of processes reached (" + processes + ").");
         }
-	Utils.debugMsg(myId, "Generando nuevo id: " + nextId + ".");
-        return nextId;
+        ++lastGeneratedId;
+        Utils.debugMsg(myId, "Generando nuevo id: " + lastGeneratedId + ".");
+        return lastGeneratedId;
     }
 
-    public void registerMe(SiteInterface otherSite) throws RemoteException, SizeLimitExceededException
+    public void registerMe(SiteInterface otherSite) throws RemoteException, SizeLimitExceededException, InvalidRelationIdException
     {
-	assert(nextId != myId);
-        Utils.debugMsg(myId, "Recibi un nuevo proceso con id: " + otherSite.getId() + ". Yo espero que tanga la id: " + nextId + ".");
-        assert(nextId == otherSite.getId());
-        if(nextId >= processes) {
-		throw new SizeLimitExceededException("Maximum amount of processes reached (" + processes + ").");
+        assert(registeredIds != myId);
+        int otherId = otherSite.getId();
+        Utils.debugMsg(myId, "Recibi un nuevo proceso con id: " + otherId + ". Yo espero que tanga la id: " + registeredIds + ".");
+        assert(registeredIds == otherId);
+        if(registeredIds >= processes) {
+		    throw new SizeLimitExceededException("Maximum amount of processes reached (" + processes + ").");
         }
-        this.sitesArr[nextId++] = otherSite;
+        if(otherId == myId) {
+            Utils.debugErr(myId, "Alguien intenta suplantarme. Ayuda :s");
+            throw new InvalidRelationIdException("Estas intentando registrate con mi Id. Baka!!.");
+        }
+        if(otherId < registeredIds) {
+            throw new InvalidRelationIdException("Estas intentando registrate una Id ya registrada.");
+        }
+        this.sitesArr[registeredIds++] = otherSite;
     }
 
     public int usableLengthRN()
     {
-        return nextId;
+        assert(registeredIds <= processes);
+        return registeredIds;
     }
 
     public int incrementMyRN()
@@ -97,14 +105,14 @@ public class SitesHandler
 
     public void updateRN(int i, int sn)
     {
-        assert(i < nextId);
+        assert(i < registeredIds);
         RN[i] = Math.max(RN[i], sn);
     }
 
     public boolean requestEveryone(int sn) throws RemoteException
     {
         boolean didIGotTheToken = false;
-        for(int j = 0; j < nextId; ++j) {
+        for(int j = 0; j < registeredIds; ++j) {
             if(j != myId) {
                 didIGotTheToken = this.sitesArr[j].request(myId, sn) || didIGotTheToken;
             }
@@ -115,7 +123,7 @@ public class SitesHandler
     public void killEveryone() throws RemoteException
     {
         Utils.debugMsg(myId, "Asesinatos, asesinatos en masa!");
-        for(int j = 0; j < nextId; ++j) {
+        for(int j = 0; j < registeredIds; ++j) {
             if(j != myId) {
                 this.sitesArr[j].kill();
             }

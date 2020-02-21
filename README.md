@@ -22,6 +22,9 @@ Colores:
 - Morado: Esperando token + RN.
 - Blanco: Entrando a la sección critica + RN.
 - Negro: El proceso entrega o recibe el token.
+  - Un proceso muestra el LN y la Queue del token que acaba de recibir.
+
+Cada vez que se recibe un request de otro proceso se muestra el estado actual y el RN.
 
 
 Notas de la implementación:

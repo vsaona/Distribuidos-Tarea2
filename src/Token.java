@@ -46,4 +46,25 @@ public class Token implements Serializable
 	{
 		return this.queue.remove();
 	}
+
+	public String lnAsStr()
+	{
+		return Utils.arrayToStr(LN);
+	}
+
+	public String queueAsStr()
+	{
+		String str = "<";
+		boolean first = true;
+		for(int val: queue) {
+			if(first) {
+				first = false;
+			} else {
+				str += ", ";
+			}
+			str += val;
+		}
+		str += ">";
+		return str;
+	}
 }

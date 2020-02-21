@@ -1,6 +1,7 @@
 import java.rmi.*;
 import java.rmi.server.UnicastRemoteObject;
 
+import javax.management.relation.InvalidRelationIdException;
 import javax.naming.SizeLimitExceededException;
 
 class Site extends UnicastRemoteObject implements SiteInterface
@@ -18,14 +19,14 @@ class Site extends UnicastRemoteObject implements SiteInterface
     private boolean isWaiting = false;
     private boolean didExecute = false;
 
-    boolean everythingIsFine = true;
+    private boolean everythingIsFine = true;
 
     public Site() throws RemoteException
     {
         super();
     }
 
-    public Site(RMIStuff rmi, int processes, int myId, long originalSize) throws RemoteException, SizeLimitExceededException, InterruptedException
+    public Site(RMIStuff rmi, int processes, int myId, long originalSize) throws RemoteException, SizeLimitExceededException, InterruptedException, InvalidRelationIdException
     {
         super();
         if(myId >= processes) {
@@ -58,7 +59,7 @@ class Site extends UnicastRemoteObject implements SiteInterface
         return originalSize;
     }
 
-    public void registerMe(SiteInterface otherSite) throws RemoteException, SizeLimitExceededException
+    public void registerMe(SiteInterface otherSite) throws RemoteException, SizeLimitExceededException, InvalidRelationIdException
     {
         checkValidState();
         skHandler.registerMe(otherSite);
@@ -68,11 +69,11 @@ class Site extends UnicastRemoteObject implements SiteInterface
     {
         checkValidState();
         if(!isExcuting && !isRequesting) {
-            Utils.cyanPrintln(Utils.ANSI_WHITE + "Ocioso. " + skHandler.rnAsStr());
+            Utils.cyanPrintln(Utils.ANSI_WHITE + "Ocioso. RN: " + skHandler.rnAsStr());
         } else if(isRequesting) {
-            Utils.purplePrintln(Utils.ANSI_WHITE + "Esperando token. " + skHandler.rnAsStr());
+            Utils.purplePrintln(Utils.ANSI_WHITE + "Esperando token. RN: " + skHandler.rnAsStr());
         } else {
-            Utils.whitePrintln(Utils.ANSI_BLACK + "Seccion critica. " + skHandler.rnAsStr());
+            Utils.whitePrintln(Utils.ANSI_BLACK + "Seccion critica. RN: " + skHandler.rnAsStr());
         }
     }
 
@@ -185,6 +186,7 @@ class Site extends UnicastRemoteObject implements SiteInterface
                 }
             } catch (RemoteException e) {
                 System.err.println(e.toString());
+                // e.printStackTrace(System.err);
                 killEveryone();
             }
         }
@@ -196,10 +198,10 @@ class Site extends UnicastRemoteObject implements SiteInterface
         checkValidState();
 
         assert(i != myId);
-        assert(token != null);
 
         Utils.debugMsg(myId, "Recibi un request de " + i + " con un sn de " + sn);
         skHandler.updateRN(i, sn);
+        showState();
         if((token != null) && !isExcuting && didExecute) {
             Utils.debugMsg(myId, "Tengo el token y no lo estoy usando.");
             if(skHandler.getRN(i) == token.getLN(i) + 1) {
@@ -208,7 +210,8 @@ class Site extends UnicastRemoteObject implements SiteInterface
                     skHandler.getSite(i).takeToken(removeToken(i));
                     return true;
                 } catch (RemoteException e) {
-                    System.err.println(e.toString());
+                    // System.err.println(e.toString());
+                    e.printStackTrace(System.err);
                     killEveryone();
                 }
             } else {
@@ -223,16 +226,20 @@ class Site extends UnicastRemoteObject implements SiteInterface
         checkValidState();
 
         Utils.debugMsg(myId, "Me acaba de llegar el token y lo acepte.");
-        Utils.blackPrintln(Utils.ANSI_WHITE + "Acabo de recibir el token.");
+        Utils.blackPrintln(Utils.ANSI_PURPLE + "Acabo de recibir el token.");
         this.token = token;
         isRequesting = false;
         isWaiting = false;
+        Utils.blackPrintln(Utils.ANSI_PURPLE + "LN: " + token.lnAsStr());
+        Utils.blackPrintln(Utils.ANSI_PURPLE + "Queue: " + token.queueAsStr());
     }
 
     private Token removeToken(int j)
     {
         Utils.debugMsg(myId, "Entregando token a " + j + ".");
-        Utils.blackPrintln(Utils.ANSI_WHITE + "Entregando token a " + j + ".");
+        Utils.blackPrintln(Utils.ANSI_PURPLE + "Entregando token a " + j + ".");
+        Utils.blackPrintln(Utils.ANSI_PURPLE + "LN: " + token.lnAsStr());
+        Utils.blackPrintln(Utils.ANSI_PURPLE + "Queue: " + token.queueAsStr());
         Token tokenAux = this.token;
         this.token = null;
         return tokenAux;
@@ -264,8 +271,8 @@ class Site extends UnicastRemoteObject implements SiteInterface
         try {
             skHandler.killEveryone();
         } catch (RemoteException e) {
-            Utils.debugErr(myId, "Ocurrio un error al intentar matarlos a todos.");
-            Utils.debugErr(myId, e.toString());
+            Utils.debugErr(myId, "Ocurrio un error al intentar matarlos a todos.\n\tEsto es normal, probablemente ya se mataron todos y soy el que falta.");
+            // Utils.debugErr(myId, e.toString());
         }
         Utils.debugMsg(myId, "Ahora cometere la autolesion mortal.");
         System.out.println("Ahora cometere la autolesion mortal.");
@@ -307,6 +314,7 @@ class Site extends UnicastRemoteObject implements SiteInterface
                     Utils.debugMsg(myId, "Ya no tengo el token.");
                 } catch(RemoteException e) {
                     System.err.println(e.toString());
+                    // e.printStackTrace(System.err);
                     killEveryone();
                 }
             }

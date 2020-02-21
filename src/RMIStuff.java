@@ -24,6 +24,7 @@ public class RMIStuff
 			Utils.debugMsg(-1, "Bindeando objecto en la posicion " + objId + ".");
 			reg.rebind(baseName + objId, obj);
 		} catch (RemoteException e) {
+			System.err.println("Ocurrio un error al bindear objeto en la posicion " + objId + ".");
 			throw new RemoteException(e.toString());
 		}
 	}
@@ -35,8 +36,11 @@ public class RMIStuff
 			try {
 				Utils.debugMsg(-1, "Buscando el objeto " + objId + ".");
 				obj = reg.lookup(baseName + objId);
-			} catch (NotBoundException e){
+				break;
+			} catch(NotBoundException e) {
 				System.out.println("El objeto todavia no ha sido registrado en el RMI...");
+			} catch(ConnectException e) {
+				System.out.println("Problemas encontrando el objeto " + objId + ".");
 			}
 			Utils.sleep(-1, waitTime);
 		}
@@ -50,6 +54,7 @@ public class RMIStuff
 			Utils.debugMsg(-1, "Creando registro RMI en puerto " + rmiPort + ".");
 			reg = LocateRegistry.createRegistry(rmiPort);
 		} catch (RemoteException e) {
+			System.err.println("Error al crear el registro en el puerto " + rmiPort + ".");
 			throw new RemoteException(e.toString());
 		}
 		return reg;

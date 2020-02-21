@@ -126,4 +126,14 @@ class Utils
             Utils.bluePrintln(msg);
         }
     }
+
+    public static String arrayToStr(int[] arr)
+    {
+        String str = "[(0, " + arr[0] + ")";
+        for(int i = 1; i < arr.length; ++i) {
+            str += ", (" + i + ", " + arr[i] + ")";
+        }
+        str += "]";
+        return str;
+    }
 }
