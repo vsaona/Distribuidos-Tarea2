@@ -21,15 +21,15 @@ class Site extends UnicastRemoteObject implements SiteInterface
     boolean everythingIsFine = true;
 
     public Site() throws RemoteException
-	{
-		super();
+    {
+        super();
     }
 
     public Site(RMIStuff rmi, int processes, int myId, long originalSize) throws RemoteException, SizeLimitExceededException, InterruptedException
     {
         super();
         if(myId >= processes) {
-			throw new SizeLimitExceededException("Maximum amount of processes reached (" + processes + ").");
+            throw new SizeLimitExceededException("Maximum amount of processes reached (" + processes + ").");
         }
         this.myId = myId;
         this.originalSize = originalSize;

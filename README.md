@@ -1,6 +1,11 @@
 # Distribuidos-Tarea2
 Tarea sobre algoritmo de Suzuki-Kasami
 
+Integrantes:
+	Anghelo Carvajal	Rol: 201473062-4
+	Vicente Saona		Rol: 201641002-3
+
+Todo el código y el makefile están en la carpeta src
 
 Ejemplos de ejecución:
 - `java -ea Process 5 LoremIpsum 10 1 10 True`

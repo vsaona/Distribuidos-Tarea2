@@ -12,6 +12,6 @@ public interface SiteInterface extends Remote
     // Returns true if this site had the token and gave it to i.
     public boolean request(int i, int sn) throws RemoteException;
     public void takeToken(Token token) throws RemoteException;
-	public void waitToken() throws RemoteException;
-	public void kill() throws RemoteException;
+    public void waitToken() throws RemoteException;
+    public void kill() throws RemoteException;
 }

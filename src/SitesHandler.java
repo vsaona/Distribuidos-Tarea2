@@ -14,7 +14,7 @@ public class SitesHandler
     public SitesHandler(Site site, RMIStuff rmi, int processes, int myId) throws SizeLimitExceededException, RemoteException, InterruptedException
     {
         if(myId >= processes) {
-			throw new SizeLimitExceededException("Maximum amount of processes reached (" + processes + ").");
+		throw new SizeLimitExceededException("Maximum amount of processes reached (" + processes + ").");
         }
         this.processes = processes;
         this.myId = myId;
@@ -67,19 +67,19 @@ public class SitesHandler
     {
         assert(myId == 0);
         if(nextId >= processes) {
-			throw new SizeLimitExceededException("Maximum amount of processes reached (" + processes + ").");
+		throw new SizeLimitExceededException("Maximum amount of processes reached (" + processes + ").");
         }
-		Utils.debugMsg(myId, "Generando nuevo id: " + nextId + ".");
+	Utils.debugMsg(myId, "Generando nuevo id: " + nextId + ".");
         return nextId;
     }
 
     public void registerMe(SiteInterface otherSite) throws RemoteException, SizeLimitExceededException
     {
-		assert(nextId != myId);
+	assert(nextId != myId);
         Utils.debugMsg(myId, "Recibi un nuevo proceso con id: " + otherSite.getId() + ". Yo espero que tanga la id: " + nextId + ".");
         assert(nextId == otherSite.getId());
         if(nextId >= processes) {
-			throw new SizeLimitExceededException("Maximum amount of processes reached (" + processes + ").");
+		throw new SizeLimitExceededException("Maximum amount of processes reached (" + processes + ").");
         }
         this.sitesArr[nextId++] = otherSite;
     }

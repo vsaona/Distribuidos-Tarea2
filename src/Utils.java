@@ -110,21 +110,20 @@ class Utils
         System.out.println(ANSI_BACKGROUND_BLACK + msg + ANSI_RESET);
     }
 
-	public static void colorPrintln(long remainingSize, long originalSize, String msg)
-	{
-		long percentage = 0;
-		if(originalSize != 0) {
-			percentage = 100*remainingSize/originalSize;
-		}
-		if(percentage < 25) {
-			Utils.redPrintln(msg);
-		} else if(percentage < 50) {
-			Utils.yellowPrintln(msg);
-		} else if(percentage < 75) {
-			Utils.greenPrintln(msg);
-		} else {
-			Utils.bluePrintln(msg);
-		}
-	}
-
+    public static void colorPrintln(long remainingSize, long originalSize, String msg)
+    {
+        long percentage = 0;
+        if(originalSize != 0) {
+            percentage = 100*remainingSize/originalSize;
+        }
+        if(percentage < 25) {
+            Utils.redPrintln(msg);
+        } else if(percentage < 50) {
+            Utils.yellowPrintln(msg);
+        } else if(percentage < 75) {
+            Utils.greenPrintln(msg);
+        } else {
+            Utils.bluePrintln(msg);
+        }
+    }
 }
