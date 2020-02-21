@@ -39,6 +39,7 @@ public class Process
 			System.out.println("Mi id es: " + myId);
 		} catch(Exception e) {
 			System.err.println(e.toString());
+			// e.printStackTrace(System.err);
 			System.exit(-1);
 		}
 
@@ -49,7 +50,6 @@ public class Process
 			while(!cs.hasFileEnded()) {
 				if(site.shouldIKillMyself()) {
 					Utils.debugMsg(myId, "Me mori :s");
-					System.out.println("No quedan caracteres en el archivo.");
 					break;
 				}
 
@@ -77,6 +77,9 @@ public class Process
 					cs.waitMeIAmTired();
 				}
 			}
+
+			System.out.println("No quedan caracteres en el archivo.");
+
 		} catch(SocketException e) {
 			System.err.println(e.toString());
 			System.err.println("SocketException: RMI se cayo.");
@@ -86,9 +89,10 @@ public class Process
 		} catch(UnmarshalException e) {
 			System.err.println(e.toString());
 			System.err.println("UnmarshalException: RMI se cayo.");
-		} catch(Exception e){
+		} catch(Exception e) {
 			// Capturamos todas las excepciones para que el programa pueda finalizar.
 			System.err.println(e.toString());
+			// e.printStackTrace(System.err);
 		}
 
 		Utils.cyanPrintln(Utils.ANSI_WHITE +  "Total de caracteres extraidos: " + Utils.ANSI_BLACK + totalcharactersRead);

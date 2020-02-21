@@ -53,7 +53,7 @@ class CriticalSection
             Utils.colorPrintln(getFileSize(), site.getOriginalSize(), Utils.ANSI_WHITE +  "Extraje: " + Utils.ANSI_BLACK + charactersRead);
         } catch(IOException e) {
             site.killEveryone();
-            throw new IOException(e.getMessage());
+            throw new IOException(e.toString());
         }
         site.finishTheExecutionOfTheCriticalSection();
         return charactersRead;
@@ -77,7 +77,7 @@ class CriticalSection
         }
 
         BufferedReader reader = new BufferedReader(new InputStreamReader(new FileInputStream(fileName)));
-        reader.read(cbuff, 0, capacity);
+        int numberCharactersRead = reader.read(cbuff, 0, capacity);
         if(!this.fileHasEnded) {
             reader.read(tail);
         }
@@ -89,7 +89,7 @@ class CriticalSection
         }
         writer.close();
 
-        for(int i = 0; i < capacity; ++i) {
+        for(int i = 0; i < numberCharactersRead; ++i) {
             Utils.debugMsg(site.getId(), i + "/" + capacity + ": " + (char)cbuff[i]);
             Utils.sleep(site.getId(), milisecondsPerChar);
         }
