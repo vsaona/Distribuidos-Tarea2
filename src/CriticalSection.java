@@ -90,7 +90,7 @@ class CriticalSection
         writer.close();
 
         for(int i = 0; i < numberCharactersRead; ++i) {
-            Utils.debugMsg(site.getId(), i + "/" + capacity + ": " + (char)cbuff[i]);
+            Utils.debugMsg(site.getId(), i + "/" + capacity + ": '" + (char)cbuff[i] + "'");
             Utils.sleep(site.getId(), milisecondsPerChar);
         }
         return new String(cbuff);

@@ -79,6 +79,7 @@ class Site extends UnicastRemoteObject implements SiteInterface
 
     boolean _isInValidState()
     {
+        // Este metodo es feo. :c
         if(myId < 0) {
             return false;
         }
@@ -165,7 +166,7 @@ class Site extends UnicastRemoteObject implements SiteInterface
 
     public boolean didIRequestTheToken()
     {
-        assert(isInValidState());
+        checkValidState();
         return isRequesting || (token != null);
     }
 
@@ -226,20 +227,20 @@ class Site extends UnicastRemoteObject implements SiteInterface
         checkValidState();
 
         Utils.debugMsg(myId, "Me acaba de llegar el token y lo acepte.");
-        Utils.blackPrintln(Utils.ANSI_PURPLE + "Acabo de recibir el token.");
+        Utils.purplePrintln(Utils.ANSI_BLACK + "Acabo de recibir el token.");
         this.token = token;
         isRequesting = false;
         isWaiting = false;
-        Utils.blackPrintln(Utils.ANSI_PURPLE + "LN: " + token.lnAsStr());
-        Utils.blackPrintln(Utils.ANSI_PURPLE + "Queue: " + token.queueAsStr());
+        Utils.purplePrintln(Utils.ANSI_BLACK + "LN: " + token.lnAsStr());
+        Utils.purplePrintln(Utils.ANSI_BLACK + "Queue: " + token.queueAsStr());
     }
 
     private Token removeToken(int j)
     {
         Utils.debugMsg(myId, "Entregando token a " + j + ".");
-        Utils.blackPrintln(Utils.ANSI_PURPLE + "Entregando token a " + j + ".");
-        Utils.blackPrintln(Utils.ANSI_PURPLE + "LN: " + token.lnAsStr());
-        Utils.blackPrintln(Utils.ANSI_PURPLE + "Queue: " + token.queueAsStr());
+        Utils.purplePrintln(Utils.ANSI_BLACK + "Entregando token a " + j + ".");
+        Utils.purplePrintln(Utils.ANSI_BLACK + "LN: " + token.lnAsStr());
+        Utils.purplePrintln(Utils.ANSI_BLACK + "Queue: " + token.queueAsStr());
         Token tokenAux = this.token;
         this.token = null;
         return tokenAux;
@@ -255,7 +256,7 @@ class Site extends UnicastRemoteObject implements SiteInterface
 
     public boolean amIWaiting()
     {
-        assert(isInValidState());
+        checkValidState();
         return isWaiting;
     }
 
@@ -281,7 +282,6 @@ class Site extends UnicastRemoteObject implements SiteInterface
 
     public boolean shouldIKillMyself()
     {
-        assert(isInValidState());
         if(!everythingIsFine){
             return true;
         }

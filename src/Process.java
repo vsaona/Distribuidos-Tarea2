@@ -7,7 +7,9 @@ public class Process
 {
 	public static void main(String[] args) throws IOException, InterruptedException
 	{
-		Utils.enableDebug = true;
+		if(args.length > 6 && args[6].equalsIgnoreCase("easterEgg")) {
+			Utils.enableDebug = true;
+		}
 
 		int processes = Integer.parseInt(args[0]);
 		String fileName = args[1];
@@ -96,6 +98,7 @@ public class Process
 		}
 
 		Utils.cyanPrintln(Utils.ANSI_WHITE +  "Total de caracteres extraidos: " + Utils.ANSI_BLACK + totalcharactersRead);
+		Utils.cyanPrintln(Utils.ANSI_WHITE +  "Extraje " + totalcharactersRead.length() + Utils.ANSI_BLACK + " caracteres.");
 
 		System.out.println("Terminando el proceso.");
 		site.killEveryone();
